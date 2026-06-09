@@ -484,7 +484,6 @@ function renderPedido(){
   all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
   var html='<div class="abtns">'
     +'<button class="abtn" style="background:#22c55e" onclick="copyList()">&#128203; Copiar Lista Completa</button>'
-    +'<button class="abtn" style="background:#25d366" onclick="shareWA()">&#128242; Compartilhar no WhatsApp</button>'
     +'<button class="abtn" style="background:#5c2d0e" onclick="openSaveModal()">&#128190; Salvar no Historico</button>'
     +'<button class="abtn" style="background:#d97706" onclick="openPdfModal(null)">&#128196; Exportar PDF por Categoria</button>'
     +'</div>';
@@ -814,36 +813,41 @@ function doPDF(){
   if(cats.length===0){alert('Nenhuma categoria valida.');return;}
 
   var pages=buildPdfHtml(cats,pdfData);
-  var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   var doc='<!DOCTYPE html><html><head><meta charset="UTF-8">'
     +'<meta name="viewport" content="width=device-width,initial-scale=1">'
     +'<title>'+pdfData.nome+' - '+pdfData.dataStr+'</title>'
     +'<style>'
     +'*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#000}'
-    +'@media print{.no-print{display:none!important}@page{margin:8mm}}'
+    +'@media print{.no-print{display:none!important}@page{size:A4;margin:10mm}}'
     +'@media screen{'
-    +'.no-print{position:fixed;bottom:0;left:0;right:0;background:#1a0e02;padding:12px 16px;display:flex;gap:10px;z-index:999;box-shadow:0 -2px 12px rgba(0,0,0,.5)}'
-    +'.no-print button{flex:1;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer}'
+    +'.no-print{position:fixed;bottom:0;left:0;right:0;background:#1a0e02;padding:10px 12px;display:flex;gap:8px;z-index:999;box-shadow:0 -2px 12px rgba(0,0,0,.5)}'
+    +'.no-print button{flex:1;border:none;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:700;cursor:pointer}'
+    +'.btn-back{background:#3d1f08;color:#aaa;flex:0 0 80px}'
     +'.btn-print{background:#5c2d0e;color:#fff}'
     +'.btn-share{background:#25d366;color:#fff}'
-    +'body{padding-bottom:80px}}'
+    +'body{padding-bottom:72px}}'
     +'</style>'
     +'</head><body>'
     +pages
     +'<div class="no-print">'
-    +(isMobile
-      ?'<button class="btn-print" onclick="window.print()">&#128438; Salvar PDF</button>'
-       +'<button class="btn-share" onclick="doShare()">&#128279; Compartilhar</button>'
-      :'<button class="btn-print" onclick="window.print()" style="max-width:280px;margin:0 auto">&#128438; Imprimir / Salvar PDF</button>'
-    )
+    +'<button class="btn-back" onclick="window.close()">&#8592; Voltar</button>'
+    +'<button class="btn-print" onclick="window.print()">&#128438; Imprimir</button>'
+    +'<button class="btn-share" onclick="doShare()">&#128279; Compartilhar PDF</button>'
     +'</div>'
     +'<script>'
     +'function doShare(){'
-    +'  if(!navigator.share){window.print();return;}'
-    +'  window.print();'
+    +'  var h=document.documentElement.outerHTML;'
+    +'  var b=new Blob([h],{type:"text/html"});'
+    +'  var f=new File([b],"lista-compras.html",{type:"text/html"});'
+    +'  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){'
+    +'    navigator.share({files:[f],title:"Lista de Compras - Coco Bambu"}).catch(function(){window.print();});'
+    +'  }else if(navigator.share){'
+    +'    navigator.share({title:"Lista de Compras - Coco Bambu",text:"Lista de compras gerada pelo app."}).catch(function(){window.print();});'
+    +'  }else{'
+    +'    window.print();'
+    +'  }'
     +'}'
-    +(isMobile?''  : 'setTimeout(function(){window.print();},600);')
     +'<\/script>'
     +'</body></html>';
 
