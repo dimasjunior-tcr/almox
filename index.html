@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1a0e02"/>
+<title>Controle de Estoque</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#1a0e02;color:#f5e6d3;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding-bottom:90px}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+button{cursor:pointer;font-family:inherit}
+.hidden{display:none!important}
+.hdr{padding:28px 20px 18px;text-align:center;background:linear-gradient(180deg,#251205,#1a0e02)}
+.hdr-logo{font-size:44px;margin-bottom:6px}
+.hdr-title{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.hdr-sub{margin:5px 0 12px;font-size:13px;color:#888}
+.prog-bar{height:6px;background:#3d1f08;border-radius:99px;overflow:hidden;max-width:280px;margin:0 auto}
+.prog-fill{height:100%;background:linear-gradient(90deg,#a0704a,#c8893a);border-radius:99px;transition:width .5s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.card{display:flex;flex-direction:column;align-items:center;padding:18px 10px;border-radius:16px;border:none;gap:3px;position:relative;color:#fff}
+.card:active{opacity:.8}
+.ci{font-size:26px}.cl{font-size:13px;font-weight:700}.cd{font-size:11px;color:rgba(255,255,255,.6);text-align:center}
+.c-blue{background:linear-gradient(135deg,#7c3a1e,#5c2d0e)}
+.c-red{background:linear-gradient(135deg,#5c2d0e,#3d1f08)}
+.c-gray{background:linear-gradient(135deg,#3d1f08,#2a1505)}
+.c-amber{background:linear-gradient(135deg,#7c3a1e,#5c2d0e)}
+.badge{position:absolute;top:7px;right:7px;background:#fff;color:#dc2626;border-radius:99px;font-size:10px;font-weight:800;padding:2px 6px}
+.wide-btn{display:flex;align-items:center;gap:10px;width:calc(100% - 32px);margin:0 16px 12px;background:linear-gradient(135deg,#a0704a,#7c3a1e);border:none;color:#fff;border-radius:16px;padding:14px 16px}
+.sec-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin:4px 16px 8px}
+.cat-row{display:flex;align-items:center;gap:12px;width:100%;background:#2a1505;border:none;border-radius:12px;padding:11px 14px;margin-bottom:8px;color:#f5e6d3;text-align:left}
+.cr-emoji{font-size:20px;width:26px}.cr-info{flex:1}
+.cr-name{font-size:12px;font-weight:600;display:block;margin-bottom:4px}
+.cr-bar{height:3px;background:#3d1f08;border-radius:99px;overflow:hidden}
+.cr-fill{height:100%;border-radius:99px;transition:width .4s}
+.cr-count{font-size:12px;font-weight:700;min-width:34px;text-align:right}
+.topbar{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#2a1505;position:sticky;top:0;z-index:20;border-bottom:3px solid #5c3010}
+.back{background:none;border:none;color:#888;font-size:13px;padding:4px 8px;border-radius:8px;white-space:nowrap}
+.top-ttl{flex:1;font-size:15px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-bdg{font-size:11px;font-weight:700;color:#fff;border-radius:99px;padding:3px 9px;white-space:nowrap}
+.tabs{display:flex;gap:5px;padding:8px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:none;border-radius:18px;padding:5px 10px;font-size:17px;flex-shrink:0}
+.srch-wrap{padding:6px 14px}
+.srch{width:100%;background:#3d1f08;border:1px solid #5c3010;border-radius:12px;padding:9px 13px;color:#f5e6d3;font-size:14px;outline:none}
+.srch::placeholder{color:#555}
+.ilist{padding:0 14px}
+.icard{background:#2a1505;border-radius:12px;padding:13px;margin-bottom:9px;border-left:4px solid #5c3010}
+.itop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.iname{font-size:12px;font-weight:600;flex:1;line-height:1.3}
+.iund{font-size:10px;color:#666;margin-left:6px;flex-shrink:0;padding-top:1px}
+.irow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.ig{display:flex;flex-direction:column;gap:3px}
+.ilbl{font-size:8px;font-weight:700;color:#666;letter-spacing:.5px;text-transform:uppercase}
+.inum{background:#1a0e02;border:1px solid #5c3010;border-radius:8px;padding:7px 8px;color:#f5e6d3;font-size:14px;font-weight:600;width:100%;outline:none;text-align:center}
+.icomp{display:flex;align-items:center;justify-content:center;background:#1a0e02;border:1px solid #5c3010;border-radius:8px;padding:7px 8px;font-size:14px;font-weight:700;color:#555}
+.icomp.low{background:#3f0f0f;color:#ef4444;border-color:#7f1d1d}
+.navarr{display:flex;gap:10px;padding:12px 14px;position:sticky;bottom:0;background:#1a0e02;border-top:1px solid #2a1505}
+.narr{flex:1;background:#3d1f08;border:none;color:#f5e6d3;border-radius:12px;padding:11px;font-size:13px;font-weight:600}
+.narr:disabled{opacity:.3}
+.abtns{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.abtn{display:block;width:100%;border:none;color:#fff;border-radius:12px;padding:13px;font-size:14px;font-weight:700;text-align:center}
+.pcat{margin:0 14px 10px}
+.pcath{display:flex;justify-content:space-between;padding:9px 13px;border-radius:10px 10px 0 0;font-size:13px;font-weight:700}
+.pitem{background:#2a1505;padding:10px 13px 10px 14px;border-bottom:1px solid #3d1f08;border-left:3px solid transparent}
+.pitem:last-child{border-bottom:none;border-radius:0 0 10px 10px}
+.pname{font-size:12px;font-weight:600;margin-bottom:3px}
+.pinfo{display:flex;gap:14px;font-size:11px}
+.pest{color:#666}
+.pbuy-ok{color:#22c55e;font-weight:700}
+.pbuy-need{color:#ef4444;font-weight:700}
+.hflt{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.hflt-row{display:flex;gap:7px;flex-wrap:wrap}
+.fbtn{border:1px solid #5c3010;background:#2a1505;color:#aaa;border-radius:18px;padding:5px 13px;font-size:11px;font-weight:600}
+.fbtn.active{background:#5c2d0e;border-color:#5c2d0e;color:#fff}
+.dtrow{display:flex;gap:7px;align-items:center}
+.dtinp{background:#3d1f08;border:1px solid #5c3010;border-radius:9px;padding:7px 10px;color:#f5e6d3;font-size:12px;flex:1;outline:none}
+.dtlbl{font-size:10px;color:#666}
+.hlist{padding:0 14px}
+.hcard{background:#2a1505;border-radius:13px;margin-bottom:10px;overflow:hidden;border:1px solid #3d1f08}
+.hcardh{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #3d1f08}
+.hdname{font-size:14px;font-weight:700;color:#fff}
+.hdmeta{font-size:11px;color:#888;margin-top:2px}
+.hcnt{background:#ef444422;color:#ef4444;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700}
+.hexp{background:none;border:none;color:#5c2d0e;font-size:11px;padding:7px 14px;width:100%;text-align:left;display:flex;justify-content:space-between}
+.hbody{padding:0 14px 12px}
+.hctitle{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 5px}
+.hrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #3d1f0818;font-size:12px}
+.hrname{color:#ddd;flex:1}
+.hrqty{font-weight:700;flex-shrink:0}
+.hempty{text-align:center;padding:50px 20px;color:#555;font-size:13px}
+.delbtn{background:#7f1d1d22;border:1px solid #7f1d1d44;color:#ef4444;border-radius:7px;padding:3px 8px;font-size:10px;margin-left:5px}
+.pdfbtn{background:#92400e22;border:1px solid #92400e55;color:#f59e0b;border-radius:7px;padding:3px 8px;font-size:10px;margin-left:4px}
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:flex-end}
+.modal{background:#2a1505;border-radius:20px 20px 0 0;padding:22px 18px;width:100%;max-height:88vh;overflow-y:auto}
+.mtitle{font-size:17px;font-weight:800;margin-bottom:5px}
+.msub{font-size:12px;color:#888;margin-bottom:16px}
+.minp{width:100%;background:#1a0e02;border:1px solid #5c3010;border-radius:11px;padding:11px 13px;color:#f5e6d3;font-size:15px;outline:none;margin-bottom:14px}
+.mbtns{display:flex;gap:8px}
+.mok{flex:1;background:#5c2d0e;border:none;color:#fff;border-radius:12px;padding:13px;font-size:14px;font-weight:700}
+.mcancel{flex:1;background:#3d1f08;border:none;color:#aaa;border-radius:12px;padding:13px;font-size:14px;font-weight:600}
+.pdf-grid{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.pdf-opt{display:flex;align-items:center;gap:11px;background:#1a0e02;border:2px solid #5c3010;border-radius:10px;padding:11px 13px;cursor:pointer}
+.pdf-opt.sel{border-color:#d97706;background:#1a100022}
+.pdf-chk{width:20px;height:20px;border-radius:5px;border:2px solid #555;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+.pdf-opt.sel .pdf-chk{background:#d97706;border-color:#d97706}
+.pdf-lbl{font-size:13px;font-weight:600}
+.pdf-cnt{font-size:11px;color:#777;margin-top:1px}
+.sel-all{background:none;border:1px solid #5c3010;color:#888;border-radius:8px;padding:5px 13px;font-size:11px;margin-bottom:10px}
+.empty{display:flex;flex-direction:column;align-items:center;padding:70px 20px;gap:10px}
+.ei{font-size:58px}.et{font-size:20px;font-weight:800}.ed{font-size:13px;color:#666;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- DRAWER MENU -->
+<div id="drawer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;" onclick="closeDrawer()"></div>
+<div id="drawer" style="display:none;position:fixed;top:0;left:0;width:260px;height:100%;background:#2a1505;z-index:201;flex-direction:column;padding:0;box-shadow:4px 0 24px rgba(0,0,0,.6);">
+  <div style="padding:24px 18px 16px;border-bottom:1px solid #3d1f08;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:26px">&#127869;&#65039;</span>
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#fff;">Coco Bambu</div>
+      <div style="font-size:10px;color:#888;">Tucuruvi</div>
+    </div>
+  </div>
+  <div style="flex:1;padding:12px 0;">
+    <button onclick="closeDrawer();go('config')" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
+      <span style="font-size:20px">&#9881;&#65039;</span><span>Configurar Mínimos</span>
+    </button>
+    <button onclick="closeDrawer();go('historico')" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
+      <span style="font-size:20px">&#128203;</span><span>Histórico</span>
+    </button>
+    <button onclick="closeDrawer();novaContagem()" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
+      <span style="font-size:20px">&#128260;</span><span>Nova Contagem</span>
+    </button>
+    <div style="height:1px;background:#3d1f08;margin:4px 0;"></div>
+    <button onclick="closeDrawer();openSyncModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
+      <span style="font-size:20px">&#128257;</span><span>Sincronização</span><span id="drawer-sync-dot" style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;"></span>
+    </button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="s-home">
+  <div class="hdr" style="position:relative;">
+    <button onclick="openDrawer()" style="position:absolute;top:14px;left:14px;background:#3d1f08;border:none;color:#f5e6d3;border-radius:10px;width:38px;height:38px;font-size:20px;display:flex;align-items:center;justify-content:center;">&#9776;</button>
+    <div class="hdr-logo">&#127869;&#65039;</div>
+    <h1 class="hdr-title">Coco Bambu Tucuruvi</h1>
+    <p style="font-size:11px;color:#a0704a;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Controle de Estoque</p><p class="hdr-sub" id="hdr-sub">Carregando...</p>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="grid">
+    <button class="card c-blue" onclick="go('contagem')"><span class="ci">&#128230;</span><span class="cl">Fazer Contagem</span><span class="cd">Registrar estoque</span></button>
+    <button class="card c-red" onclick="go('pedido')"><span class="ci">&#128722;</span><span class="cl">Lista de Compras</span><span class="cd" id="pedido-desc">0 itens para repor</span><span class="badge hidden" id="bdg">0</span></button>
+  </div>
+  <p class="sec-title">Progresso por categoria</p>
+  <div style="padding:0 16px" id="cat-rows"></div>
+</div>
+
+<!-- CONTAGEM -->
+<div id="s-contagem" class="hidden">
+  <div class="topbar" id="cnt-topbar">
+    <button class="back" onclick="go('home')">&#8592; Voltar</button>
+    <span class="top-ttl" id="cnt-ttl">-</span>
+    <span class="top-bdg" id="cnt-bdg">0/0</span>
+  </div>
+  <div class="tabs" id="cnt-tabs"></div>
+  <div class="srch-wrap"><input class="srch" id="cnt-srch" placeholder="Buscar item..." oninput="renderItems()"></div>
+  <div class="ilist" id="ilist"></div>
+  <div class="navarr">
+    <button class="narr" id="btn-prev" onclick="navCat(-1)">&#8592; Anterior</button>
+    <button class="narr" id="btn-next" onclick="navCat(1)">Proxima &#8594;</button>
+  </div>
+</div>
+
+<!-- PEDIDO -->
+<div id="s-pedido" class="hidden">
+  <div class="topbar" style="border-color:#ef4444">
+    <button class="back" onclick="go('home')">&#8592; Voltar</button>
+    <span class="top-ttl">&#128722; Lista de Compras</span>
+    <span class="top-bdg" id="ped-bdg" style="background:#ef4444">0</span>
+  </div>
+  <div id="ped-body"></div>
+</div>
+
+<!-- HISTORICO -->
+<div id="s-historico" class="hidden">
+  <div class="topbar" style="border-color:#92400e">
+    <button class="back" onclick="go('home')">&#8592; Voltar</button>
+    <span class="top-ttl">&#128203; Historico de Compras</span>
+  </div>
+  <div class="hflt">
+    <div class="hflt-row">
+      <button class="fbtn active" onclick="setFlt('todos',this)">Todos</button>
+      <button class="fbtn" onclick="setFlt('7',this)">Ult. 7 dias</button>
+      <button class="fbtn" onclick="setFlt('30',this)">Ult. 30 dias</button>
+      <button class="fbtn" onclick="setFlt('mes',this)">Este mes</button>
+      <button class="fbtn" onclick="setFlt('custom',this)">Periodo</button>
+    </div>
+    <div class="dtrow hidden" id="dt-row">
+      <span class="dtlbl">De</span><input class="dtinp" type="date" id="dt-from" onchange="renderHist()">
+      <span class="dtlbl">Ate</span><input class="dtinp" type="date" id="dt-to" onchange="renderHist()">
+    </div>
+  </div>
+  <div class="hlist" id="hlist"></div>
+</div>
+
+<!-- CONFIG -->
+<div id="s-config" class="hidden">
+  <div class="topbar" id="cfg-topbar">
+    <button class="back" onclick="go('home')">&#8592; Voltar</button>
+    <span class="top-ttl" id="cfg-ttl">Minimos</span>
+  </div>
+  <div class="tabs" id="cfg-tabs"></div>
+  <div class="srch-wrap"><input class="srch" id="cfg-srch" placeholder="Buscar item..." oninput="renderCfg()"></div>
+  <div class="ilist" id="cfg-list"></div>
+</div>
+
+<!-- MODAL SYNC -->
+<div class="moverlay hidden" id="m-sync">
+  <div class="modal">
+    <div class="mtitle">&#128257; Sincronização</div>
+    <div class="msub">Compartilhe dados em tempo real entre celulares e computadores via Firebase</div>
+    <div id="sync-status" style="font-size:12px;margin-bottom:12px;padding:8px 12px;border-radius:8px;background:#1a0e02;color:#888;text-align:center;">&#9898; Desconectado</div>
+    <label style="font-size:10px;color:#888;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px;">URL do Firebase Realtime Database</label>
+    <input class="minp" id="sync-url-inp" placeholder="https://seu-projeto-rtdb.firebaseio.com" type="url" style="margin-bottom:6px;">
+    <div style="font-size:10px;color:#666;margin-bottom:14px;line-height:1.6;">
+      &#128161; <strong style="color:#a0704a">Como configurar:</strong><br>
+      1. Acesse <strong>console.firebase.google.com</strong><br>
+      2. Crie um projeto → Realtime Database → Criar banco<br>
+      3. Em Regras, cole: <code style="background:#1a0e02;padding:2px 5px;border-radius:4px;">{"rules":{".read":true,".write":true}}</code><br>
+      4. Copie a URL do banco e cole acima
+    </div>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeModal('m-sync')">Cancelar</button>
+      <button class="mok" onclick="saveSync()" id="sync-ok-btn">Conectar</button>
+    </div>
+    <button onclick="disconnectSync()" style="margin-top:10px;width:100%;background:none;border:1px solid #7f1d1d44;color:#ef4444;border-radius:10px;padding:10px;font-size:12px;font-weight:600;">Desconectar / Usar apenas local</button>
+  </div>
+</div>
+
+<!-- MODAL NOME -->
+<div class="moverlay hidden" id="m-nome">
+  <div class="modal">
+    <div class="mtitle" id="m-ttl">Salvar Pedido</div>
+    <div class="msub" id="m-sub">De um nome para identificar este pedido</div>
+    <input class="minp" id="m-inp" placeholder="Ex: Inventario Semana 23..." maxlength="60">
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeModal('m-nome')">Cancelar</button>
+      <button class="mok" id="m-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PDF -->
+<div class="moverlay hidden" id="m-pdf">
+  <div class="modal">
+    <div class="mtitle">Exportar PDF</div>
+    <div class="msub" id="m-pdf-sub">Escolha as categorias</div>
+    <button class="sel-all" onclick="pdfToggleAll()">Selecionar / Desmarcar tudo</button>
+    <div class="pdf-grid" id="pdf-grid"></div>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeModal('m-pdf')">Cancelar</button>
+      <button class="mok" style="background:#d97706" onclick="doPDF()">Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DADOS =====================
+const CATS = {
+  "MERCEARIA":{cor:"#C8872A",emoji:"🧂",itens:[
+    {n:"AÇAFRÃO / CÚRCUMA",u:"500 GR"},{n:"ACETO BALSÂMICO",u:"500ml"},{n:"AÇÚCAR CRISTAL",u:"KG"},{n:"AÇÚCAR MASCAVO",u:"KG"},{n:"AÇÚCAR MASCAVO SACHÊ",u:"UND"},{n:"AÇÚCAR REFINADO (SACHÊ)",u:"UND"},{n:"AÇÚCAR REFINADO ESPECIAL UNIÃO",u:"KG"},{n:"ADOÇANTE LÍQUIDO",u:"UND"},{n:"ADOÇANTE SACHÊ ZEROCAL",u:"UND"},{n:"ADOÇANTE TAL E QUAL",u:"UND"},{n:"AJINOMOTO",u:"10kg/25kg"},{n:"AJI-SAL GROSSO",u:"2 kg"},{n:"AJI-SAL REFINADO",u:"2KG"},{n:"ALCAPARRAS",u:"2kg"},{n:"AMEIXA SECA SEM CAROÇO",u:"500gr"},{n:"AMÊNDOAS LAMINADA",u:"KG"},{n:"ARROZ ARBÓRIO",u:"KG"},{n:"ARROZ BRANCO (CLIENTE)",u:"5 KG"},{n:"AZEITE DE DENDÊ",u:"900ml"},{n:"AZEITE EXTRA VIRGEM (CHAPA)",u:"2 LT"},{n:"AZEITONA PRETA C/ CAROÇO AZAPA",u:"500gr"},{n:"AZEITONA PRETA FATIADA",u:"1,8kg"},{n:"AZEITONA VERDE FATIADA",u:"1,8kg"},{n:"AZEITONA VERDE SEM CAROÇO",u:"120 G"},{n:"BICARBONATO DE SÓDIO",u:"UND"},{n:"BICO DE AZEITE",u:"UND"},{n:"BISCOITO MAISENA",u:"400g"},{n:"BISCOITO TUBETES TRADICIONAL",u:"kg"},{n:"CAFÉ EM PÓ (FUNCIONÁRIO)",u:"500g"},{n:"CAFÉ NESCAFÉ TRADIÇÃO",u:"100g"},{n:"CAFÉ NESPRESSO DESCAFEINADO",u:"50und"},{n:"CAFÉ NESPRESSO LEGGERO",u:"50und"},{n:"CAFÉ NESPRESSO RISTRETTO",u:"50und"},{n:"CALDO DE CARNE (24TAB)",u:"UND"},{n:"CALDO DE GALINHA (24TAB)",u:"UND"},{n:"CANELA EM PAU",u:"250 GR"},{n:"CANELA EM PÓ",u:"500 GR"},{n:"CÁPSULA CHANTILLY CX10un",u:"UND"},{n:"CASTANHA DE CAJU INTEIRA",u:"1kg"},{n:"CATCHUP",u:"1,01kg"},{n:"CEREJA EM CALDA",u:"1,8 kg"},{n:"CHÁ CAMOMILA",u:"10und"},{n:"CHÁ DE HORTELÃ",u:"10und"},{n:"CHÁ FRUTAS VERMELHAS",u:"10und"},{n:"CHÁ VERDE",u:"10und"},{n:"CHAMPIGNON FATIADO",u:"2kg"},{n:"CHOCO POWER MINI BALLS",u:"500g"},{n:"CHOCOLATE BRANCO (NESTLÉ)",u:"KG"},{n:"CHOCOLATE EM PÓ 50% CACAU",u:"1 KG"},{n:"CHOCOLATE GRANULADO (MIÇANGA)",u:"500gr"},{n:"CHOCOLATE MEIO AMARGO",u:"kg"},{n:"COCO EM FLOCOS (ÚMIDO)",u:"kg"},{n:"COLORÍFICO (COLORAU)",u:"kg"},{n:"COUSCOUS MARROQUINO",u:"500g"},{n:"CREME DE LEITE CAIXA",u:"UND"},{n:"CREME DE LEITE NESTLÉ LATA",u:"300g"},{n:"CURRY EM PÓ",u:"500 GR"},{n:"EMULSIFICANTE",u:"200gr"},{n:"ERVA DE PROVENCE",u:"250 GR"},{n:"ERVAS FINAS",u:"250 GR"},{n:"ESPAGUETINE CLIENTE",u:"500G"},{n:"ESSÊNCIA DE BAUNILHA",u:"30ml"},{n:"ESTRAGÃO EM FLOCOS",u:"250 GM"},{n:"EXTRATO DE TOMATE",u:"KG"},{n:"FARINHA AMARELA DA BAHIA",u:"kg"},{n:"FARINHA DE MANDIOCA BRANCA",u:"kg"},{n:"FARINHA DE ROSCA",u:"kg"},{n:"FARINHA DE TRIGO (SEM FERMENTO)",u:"5kg"},{n:"FARINHA PARA EMPANADOS (JAPONÊS)",u:"kg"},{n:"FEIJÃO CARIOCA (FUNCIONÁRIO)",u:"kg"},{n:"FEIJÃO PRETO (FUNCIONÁRIO)",u:"kg"},{n:"FERMENTO BIOLÓGICO SECO",u:"125 GR"},{n:"FERMENTO EM PÓ QUÍMICO (ROYAL)",u:"250 GR"},{n:"FOLHA DE LOURO",u:"250g"},{n:"FONDOR - MAGGI",u:"1,1kg"},{n:"FUMAÇA LÍQUIDA",u:"UND"},{n:"FUNGHI SECCHI",u:"300gr"},{n:"GELEIA DE PIMENTA VERMELHA",u:"180gr"},{n:"GERGELIM BRANCO",u:"KG"},{n:"GERGELIM PRETO",u:"KG"},{n:"GORDURA / ÓLEO DE ALGODÃO FRITURA",u:"14,5kg"},{n:"GORDURA CUKIN GOLDEN",u:"2,5kg"},{n:"HONDASHI (SUSHI)",u:"500gr"},{n:"IDENTIFICADOR CAFÉ DESCAFEINADO",u:"50und"},{n:"IDENTIFICADOR CAFÉ LEGGERO",u:"50und"},{n:"IDENTIFICADOR CAFÉ RISTRETTO",u:"50und"},{n:"KETCHUP HEINZ",u:"397g"},{n:"KIMILHO P/ COUSCOUS",u:"500G"},{n:"LARANJA DESIDRATADA",u:"200 GR"},{n:"LEITE CONDENSADO LT",u:"395g"},{n:"LEITE DE COCO",u:"LITRO"},{n:"LEITE EM PÓ INTEGRAL CAPUCCINO",u:"400g"},{n:"LEITE EM PÓ INTEGRAL PURO",u:"400g"},{n:"LEITE INTEGRAL LONGA VIDA",u:"1lt"},{n:"LICHIA EM CALDA",u:"230gr"},{n:"MACARRÃO ESPAG. (FUNCIONÁRIO)",u:"UND"},{n:"MACARRÃO FETTUCCINE",u:"500G"},{n:"MAIONESE - HELLMANS/ARISCO",u:"3kg"},{n:"MAIZENA (AMIDO DE MILHO)",u:"200g"},{n:"MANTEIGA DA TERRA (GARRAFA)",u:"840ml"},{n:"MARGARINA (SOFITELI/BOULANGE)",u:"15kg"},{n:"MEL DE ABELHA",u:"400gr"},{n:"MELADO DE CANA",u:"400gr"},{n:"MILHO VERDE (LATA)",u:"170 GR"},{n:"MOLHO DE PIMENTA COCO BAMBU",u:"UND"},{n:"MOLHO DE PIMENTA TABASCO 60ML",u:"UND"},{n:"MOLHO INGLÊS IMPORTADO",u:"UND"},{n:"MOLHO SHOYO TRADICIONAL",u:"Litro"},{n:"MOSTARDA (COZINHA) PREDI",u:"3,3kg"},{n:"MOSTARDA (SALADA) CEPERA",u:"3,3kg"},{n:"MOSTARDA COM MEL",u:"400gr"},{n:"MOSTARDA FRANCESA DIJON",u:"215gr"},{n:"NESCAU",u:"2kg"},{n:"NOZ MOSCADA EM BOLA",u:"250 GR"},{n:"NOZES SEM CASCA",u:"KG"},{n:"NUTELLA",u:"170g"},{n:"ÓLEO COMPOSTO COZINHA",u:"5lt"},{n:"ÓLEO DE GERGELIM TORRADO",u:"LITRO"},{n:"ÓLEO DE SOJA",u:"900ml"},{n:"ORÉGANO",u:"250 GR"},{n:"PALMITO INTEIRO EM CONSERVA",u:"300gr"},{n:"PÁPRICA DEFUMADA",u:"500 GR"},{n:"PÁPRICA PICANTE",u:"500 GR"},{n:"PEPINO CONDIMENTADO",u:"300gr"},{n:"PIMENTA BIQUINHO",u:"180gr"},{n:"PIMENTA BRANCA EM PÓ",u:"100G"},{n:"PIMENTA CALABRESA",u:"250G"},{n:"PIMENTA DO REINO PRETA EM GRÃO",u:"500 GR"},{n:"PIMENTA PRETA EM PÓ",u:"500 GR"},{n:"PISTACHE SEM CASCA",u:"kg"},{n:"POLPA DE TOMATE",u:"1,05 kg"},{n:"RAPADURA",u:"400 GR"},{n:"SAKÊ USO CULINÁRIO",u:"500 ML"},{n:"SAL GROSSO",u:"kg"},{n:"SAL REFINADO",u:"kg"},{n:"SAL SACHÊ",u:"UND"},{n:"SUCO (FUNCIONÁRIO)",u:"UND"},{n:"SUCO DE ABACAXI",u:"UND"},{n:"SUCO DE CAJU",u:"UND"},{n:"SUCO DE CRANBERRY",u:"UND"},{n:"SUCO DE GOIABA",u:"UND"},{n:"SUCO DE MARACUJÁ",u:"UND"},{n:"SUCO DE TOMATE",u:"LITRO"},{n:"SUCO DE UVA CASA VALDUGA",u:"250ML"},{n:"TAPIOCA GRANULADA",u:"500g"},{n:"TOMATE PELATO",u:"1,53kg"},{n:"TOMATE SECO",u:"1,4kg"},{n:"VINAGRE DE ÁLCOOL",u:"5 LT"},{n:"VINAGRE DE ARROZ",u:"750 ML"},{n:"VINAGRE DE MAÇÃ",u:"750 ML"},{n:"VINAGRE DE VINHO BRANCO",u:"750ml"},{n:"VINHO BRANCO PRATOS",u:"5lts"},{n:"VINHO TINTO PRATOS",u:"5 lts"},{n:"XAROPE DE GROSELHA",u:"900ml"},{n:"ZIMBRO",u:"250G"}
+  ]},
+  "DESTILADOS":{cor:"#7B3F9E",emoji:"🍾",itens:[
+    {n:"4915 TAYLORS FINE TAWNY",u:"750ml"},{n:"APEROL",u:"750ml"},{n:"BITTER ANGOSTURA 100ML",u:"UND"},{n:"BITTER ANGOSTURA LARANJA",u:"UND"},{n:"CACHAÇA COCO BAMBU",u:"700ml"},{n:"CACHAÇA SAGATIBA",u:"700ml"},{n:"CACHAÇA SELETA 670ML",u:"600ml"},{n:"CACHAÇA YPIOCA 150 ANOS",u:"LITRO"},{n:"CACHAÇA YPIOCA 160 ANOS",u:"LITRO"},{n:"CACHAÇA YPIOCA PRATA 1L",u:"700ml"},{n:"CAMPARI 900ML",u:"960ml"},{n:"CARPANO DRY (VERDE) 900ML",u:"900ml"},{n:"CONHAQUE DOMECQ",u:"750ml"},{n:"CONHAQUE DREHER",u:"LITRO"},{n:"ESPUMANTE SALTON DRINKS BRUT",u:"900ml"},{n:"GIN TANQUERAY EXPORT STRENGTH",u:"700ml"},{n:"GIN TANQUERAY SEVILLA",u:"750ml"},{n:"LICOR 43 700ML",u:"750ml"},{n:"LICOR AMARULA",u:"700ml"},{n:"LICOR BAILEYS 750ML",u:"700ml"},{n:"LICOR CHAMBORD",u:"750ml"},{n:"LICOR COCO BAMBU",u:"750ml"},{n:"LICOR COINTREAU NACIONAL",u:"700ml"},{n:"LICOR CURAÇAU FINO STOCK",u:"375ml"},{n:"LICOR DE BLUE STOCK",u:"700ml"},{n:"LICOR DE CACAU STOCK",u:"720ml"},{n:"LICOR DE CASSIS STOCK",u:"720ml"},{n:"LICOR DE PÊSSEGO STOCK",u:"720ml"},{n:"LICOR DRAMBUIE",u:"720ml"},{n:"LICOR FRANGELICO 700ML",u:"720ml"},{n:"LICOR LIMONCELLO",u:"750ml"},{n:"PUNT E MÊS VERMOUTH",u:"700ml"},{n:"RUM BACARDI CARTA BRANCA",u:"700ml"},{n:"RUM MONTILLA CARTA BRANCA",u:"980ml"},{n:"SAQUÊ AZUMA DOURADO",u:"LITRO"},{n:"SUCO DE UVA GARRAFA 250ML",u:"740ml"},{n:"TEQUILA AMARELA (JOSE CUERVO)",u:"UND"},{n:"TEQUILA BRANCA (JOSE CUERVO)",u:"750ml"},{n:"VINHO MARCUS JAMES BRANCO",u:"750ml"},{n:"VINHO MARCUS JAMES TINTO",u:"750ml"},{n:"VODKA ABSOLUT",u:"750ml"},{n:"VODKA ABSOLUT APEACH",u:"LITRO"},{n:"VODKA ABSOLUT CITRON",u:"750ml"},{n:"VODKA ABSOLUT VANILIA",u:"750ml"},{n:"VODKA BELVEDERE",u:"750ml"},{n:"VODKA CÎROC",u:"700ml"},{n:"VODKA KETEL ONE",u:"750ml"},{n:"VODKA NACIONAL",u:"LITRO"},{n:"VODKA SMIRNOFF",u:"LITRO"},{n:"WHISKY BALLANTINES FINEST 08 ANOS",u:"980ml"},{n:"WHISKY BLACK LABEL",u:"LITRO"},{n:"WHISKY BLUE LABEL",u:"LITRO"},{n:"WHISKY BULCHANAS 12 ANOS",u:"LITRO"},{n:"WHISKY BULLET BOURBON",u:"LITRO"},{n:"WHISKY CHIVAS REGAL",u:"750ml"},{n:"WHISKY GOLD LABEL",u:"LITRO"},{n:"WHISKY JACK DANIELS",u:"750ml"},{n:"WHISKY OLD PARR",u:"LITRO"},{n:"WHISKY RED LABEL",u:"LITRO"},{n:"XAROPE DE ABACAXI",u:"700ml"},{n:"XAROPE DE BAUNILHA",u:"750ml"},{n:"XAROPE DE LIMÃO SICILIANO",u:"700ml"},{n:"XAROPE DE MAÇÃ VERDE",u:"700ml"},{n:"XAROPE DE MARACUJÁ",u:"700ml"},{n:"XAROPE DE MORANGO",u:"700ml"},{n:"XAROPE DE TANGERINA",u:"700ml"},{n:"XAROPE DE GRENADINE",u:"700ml"},{n:"XAROPE DE CRANBERRY",u:"720ml"}
+  ]},
+  "BEBIDAS FRIAS":{cor:"#1A7DAE",emoji:"🍺",itens:[
+    {n:"ÁGUA MINERAL C/ GÁS 500ML",u:"UND"},{n:"ÁGUA MINERAL COM GÁS",u:"UND"},{n:"ÁGUA MINERAL SEM GÁS",u:"UND"},{n:"ÁGUA PANA 250ml",u:"UND"},{n:"ÁGUA PERRIER 330ML",u:"UND"},{n:"ÁGUA SAN PELLEGRINO 250ml",u:"UND"},{n:"ÁGUA TÔNICA ANTARCTICA",u:"UND"},{n:"ÁGUA TÔNICA ANTART ZR",u:"UND"},{n:"CERVEJA (PRATO)",u:"UND"},{n:"CERVEJA ANTARCTICA ORIGINAL 600ML",u:"UND"},{n:"CERVEJA BECKS 600ML",u:"UND"},{n:"CERVEJA BUDWEISER LONG NECK",u:"UND"},{n:"CERVEJA BUDWEISER ZERO LONG NECK",u:"UND"},{n:"CERVEJA COCO BAMBU",u:"UND"},{n:"CERVEJA CORONA LONG NECK",u:"UND"},{n:"CERVEJA SPATEN 600",u:"UND"},{n:"CERVEJA STELLA ARTOIS LONG NECK",u:"UND"},{n:"CHOPP BRAHMA",u:"50L"},{n:"CHOPP STELLA",u:"30L"},{n:"ENERGÉTICO RED BULL",u:"UND"},{n:"H2O LIMONETO",u:"UND"},{n:"H2O LIMÃO",u:"UND"},{n:"REFRI COCA 2L",u:"UND"},{n:"REFRI COCA COLA LATA",u:"UND"},{n:"REFRI COCA ZERO 2L",u:"UND"},{n:"REFRI COCA ZERO LATA",u:"UND"},{n:"REFRI SUKITA LARANJA LATA",u:"UND"},{n:"REFRI SUKITA UVA LATA",u:"UND"},{n:"REFRI GUARANÁ 2L",u:"UND"},{n:"REFRI GUARANÁ LATA",u:"UND"},{n:"REFRI GUARANÁ ZERO 2L",u:"UND"},{n:"REFRI GUARANÁ ZERO LATA",u:"UND"},{n:"REFRI SCHWEPPES CITRUS LATA",u:"UND"},{n:"REFRI SODA LIMONADA ZERO",u:"UND"},{n:"REFRI SODA LIMONADA ANTARCTICA",u:"UND"},{n:"REFRI SODA LIMONADA 200ML",u:"UND"}
+  ]},
+  "DESCARTÁVEIS":{cor:"#2E8B5A",emoji:"🧹",itens:[
+    {n:"ADESIVO PARA BATATA PALHA",u:"600 UND"},{n:"ADESIVO PARA PUDIM",u:"1000 UND"},{n:"ÁLCOOL ANTISSÉPTICO",u:"UND"},{n:"ÁLCOOL EM GEL",u:"5 LT"},{n:"ÁLCOOL LÍQUIDO 70% 1L",u:"LT"},{n:"BANDEIRINHA DECORATIVA COCO BAMBU",u:"UND"},{n:"BANDEIRINHA DECORATIVA KIDS",u:"UND"},{n:"BOBINA 20X30 PLÁSTICA",u:"UND"},{n:"BOBINA 30X40 PLÁSTICA",u:"UND"},{n:"BOBINA 40X60 PLÁSTICA",u:"UND"},{n:"BOBINA AMARELA TÉRMICA",u:"30 UND"},{n:"BOBINA PARA CALCULADORA",u:"30 UND"},{n:"BORRIFADOR COZINHA 500ML",u:"UND"},{n:"BORRIFADOR GARÇOM 50ML",u:"UND"},{n:"CANUDO PARA FROZEN (BIODEG.)",u:"2000 UND"},{n:"CANUDO PARA SUCO (BIODEG.)",u:"3000 UND"},{n:"CARTÃO DRINKS",u:"100 UND"},{n:"COLHER DE PLÁSTICO",u:"50 UND"},{n:"COMANDA DE GARÇOM 1 VIA",u:"UND"},{n:"COPO DESCARTÁVEL 200ML",u:"100 UND"},{n:"COPO DESCARTÁVEL 500ML",u:"100 UND"},{n:"COPO DESCARTÁVEL 50ML",u:"100 UND"},{n:"COPO TÉRMICO 100ML",u:"25 UND"},{n:"DESINCRUSTANTE P/ CHAPAS",u:"5L"},{n:"DESINFETANTE BACTERICIDA",u:"5L"},{n:"DESINFETANTE PARA BANHEIROS",u:"5L"},{n:"DESINFETANTE USO GERAL",u:"5L"},{n:"DETERGENTE PARA MÁQUINA",u:"20 L"},{n:"SECANTE PARA MÁQUINA",u:"20 L"},{n:"DETERGENTE NEUTRO",u:"500 ML"},{n:"DETERGENTE NEUTRO PARA DILUIÇÃO",u:"5L"},{n:"DETERGENTE P/ LIMPEZA DE MESAS",u:"4,5 L"},{n:"EMBALAGEM BOLO / TORTA INTEIRA",u:"50 UND"},{n:"EMBALAGEM BOLO / TORTA FATIA",u:"50 UND"},{n:"EMBALAGEM HAMBÚRGUER",u:"CX"},{n:"EMBALAGEM JANGADEIRO",u:"CX"},{n:"EMBALAGEM PARA CASQUINHA",u:"50 UND"},{n:"EMBALAGEM PARA COCADA DELIVERY",u:"100 UND"},{n:"EMBALAGEM PETISQUEIRA",u:"50 UND"},{n:"EMBALAGEM PRATICOOK 2L",u:"CX"},{n:"EMBALAGEM SALADA DELIVERY",u:"100 UND"},{n:"ENXAGUANTE BUCAL 1,5L",u:"UND"},{n:"ESPONJA DUPLA FACE",u:"UND"},{n:"ETIQUETA CONSUMO IMEDIATO",u:"1000 UND"},{n:"ETIQUETA PARA ALIMENTO MÁQUINA",u:"1000 UND"},{n:"ETIQUETA PARA ALIMENTOS SIF",u:"1000 UND"},{n:"ETIQUETA PARA ALIMENTOS (MOLHOS)",u:"1000 UND"},{n:"ETIQUETA PARA BALANÇA",u:"1000 UND"},{n:"ETIQUETA SEMANAL COLORIDA",u:"1000 UND"},{n:"FIBRA LIMPEZA PESADA",u:"UND"},{n:"FILME PVC 40x1000",u:"UND"},{n:"FORMA DE ALUMÍNIO DESCARTÁVEL P",u:"100 UND"},{n:"FORMA DE BRIGADEIRO DOURADA",u:"50 UND"},{n:"FORMA DESCARTÁVEL PUDIM G",u:"UND"},{n:"FORMA DESCARTÁVEL PUDIM P",u:"UND"},{n:"GARRAFA PLÁSTICA 300ML",u:"UND"},{n:"GRATINADEIRA 2L ROSSET",u:"CX"},{n:"GRATINADEIRA 3L ROSSET",u:"CX"},{n:"GRATINADEIRA 800ML ROSSET",u:"CX"},{n:"GUARDA CHUVA DECORATIVO",u:"UND"},{n:"GUARDANAPO 22X24",u:"UND"},{n:"GUARDANAPO 33X33",u:"UND"},{n:"HIGIENIZADOR DE ASSENTO",u:"UND"},{n:"KIT TALHERES DESCARTÁVEIS",u:"UND"},{n:"LACRE DELIVERY",u:"1000UND"},{n:"LENÇOL HOSPITALAR",u:"UND"},{n:"LIMPA ALUMÍNIO",u:"5 lt"},{n:"LUVA AMARELA G",u:"UND"},{n:"LUVA AMARELA M",u:"UND"},{n:"LUVA AMARELA P",u:"UND"},{n:"LUVA CIRÚRGICA G",u:"UND"},{n:"LUVA CIRÚRGICA M",u:"UND"},{n:"LUVA CIRÚRGICA P",u:"UND"},{n:"MARMITEX 1150ML ALUMÍNIO",u:"100 UND"},{n:"MARMITEX 1500ML ALUMÍNIO",u:"100 UND"},{n:"MARMITEX 500ML ALUMÍNIO",u:"100 UND"},{n:"MARMITEX FUNCIONÁRIOS",u:"PCT"},{n:"MÁSCARA DESCARTÁVEL PRETA",u:"50 UND"},{n:"MEXEDOR PARA CAFÉ",u:"2000 UND"},{n:"MINI PRENDEDOR COLORIDO",u:"1000 UND"},{n:"ODORIZADOR DE AMBIENTE",u:"UND"},{n:"PÁ DE LIXO",u:"UND"},{n:"PALITO DE BAMBU COM NÓ 15CM",u:"UND"},{n:"PALITO DE DENTE SACHÊ",u:"1000 UND"},{n:"PALITOS PARA CHURRASCO 25CM",u:"100 UND"},{n:"PANO DE CHÃO",u:"UND"},{n:"PANO PRATO",u:"UND"},{n:"PAPEL ALUMÍNIO",u:"UND"},{n:"PAPEL HIGIÊNICO CLIENTE",u:"UND"},{n:"PAPEL HIGIÊNICO FUNCIONÁRIO",u:"UND"},{n:"PAPEL MANTEIGA",u:"UND"},{n:"PAPEL TOALHA CLIENTE",u:"UND"},{n:"PAPEL TOALHA FUNCIONÁRIO",u:"UND"},{n:"PASTILHA DESCALCIFICANTE RATIONAL",u:"150 UND"},{n:"PASTILHA DETERGENTE VERDE RATIONAL",u:"100 UND"},{n:"PERFEX",u:"UND"},{n:"POTE PARA MOLHO PRATICUP",u:"CX"},{n:"PRATICOOK 3L ROSSET",u:"CX"},{n:"PRATICOOK 800ML ROSSET",u:"CX"},{n:"PRATO DESCARTÁVEL 21CM",u:"UND"},{n:"REFIL DE FIO DENTAL 400MTS",u:"UND"},{n:"REFIL MOP SECO",u:"UND"},{n:"REFIL MOP ÚMIDO",u:"UND"},{n:"RIBBON PARA IMPRESSORA TÉRMICA",u:"UND"},{n:"RODO DE ALUMÍNIO",u:"UND"},{n:"SABONETE CLIENTE",u:"UND"},{n:"SABONETE FUNCIONÁRIOS",u:"UND"},{n:"SACO PARA COCADA",u:"UND"},{n:"SACO A VÁCUO 15X20",u:"1000 UND"},{n:"SACO A VÁCUO 20x30",u:"1000 UND"},{n:"SACO CRISTAL 90X120 (GELO)",u:"100 UND"},{n:"SACO DE LIXO PRETO 40LT",u:"100 UND"},{n:"SACO DE LIXO PRETO 60LT",u:"100 UND"},{n:"SACO DE LIXO TRANSPARENTE 100LT",u:"100 UND"},{n:"SACO DE LIXO TRANSPARENTE 200LT",u:"50 UND"},{n:"SACO PARA ABSORVENTE 24X25",u:"UND"},{n:"SACO PARA AMOSTRA C/ LACRE",u:"1000 UND"},{n:"SANITIZANTE P/ FRUTAS E VERDURAS",u:"2 KG"},{n:"TAMPA COPO TÉRMICO 100ML",u:"100 UND"},{n:"TOUCA BRANCA DESCARTÁVEL TNT",u:"100 UND"},{n:"TOUCA PRETA TELINHA",u:"UND"},{n:"VASSOURA NYLON C/ CABO ALUMÍNIO",u:"UND"},{n:"VELA DE ANIVERSÁRIO",u:"c/4"}
+  ]},
+  "CONGELADOS":{cor:"#0E7490",emoji:"🧊",itens:[
+    {n:"BATATA PRÉ-FRITA CORTE FINO 7MM",u:"KG"},{n:"BLUE BERRIES CONGELADA",u:"1,02KG"},{n:"BRÓCOLIS CONGELADO",u:"2,5KG"},{n:"ERVILHA CONGELADA",u:"2,5KG"},{n:"ESPINAFRE CONGELADO",u:"2,5KG"},{n:"FRAMBOESA CONGELADA",u:"1,02 KG"},{n:"GELATO BRIGADEIRO",u:"KG"},{n:"GELATO CHOCOLATE",u:"KG"},{n:"GELATO COOKIES AND CREAM",u:"KG"},{n:"GELATO CREME",u:"KG"},{n:"GELATO DOCE DE LEITE",u:"KG"},{n:"GELATO PISTACHE",u:"KG"},{n:"GELATO QUEIJO COM GOIABA",u:"KG"},{n:"MANDIOCA LIMPA A VÁCUO",u:"KG"},{n:"MORANGO CONGELADO",u:"KG"},{n:"PÃO BAGUETE SEM GERGELIM",u:"12 UND"},{n:"PÃO DE FORMA SEM CASCA",u:"KG"},{n:"PÃO DE QUEIJO (TRADICIONAL)",u:"KG"},{n:"PÃO FRANCÊS",u:"KG"},{n:"PÃO FRANCÊS MINI",u:"KG"},{n:"PÃO HAMBÚRGUER",u:"UND"},{n:"PÃO ITALIANO",u:"KG"},{n:"POLPA DE ACEROLA",u:"KG"},{n:"POLPA DE CAJÁ",u:"KG"},{n:"POLPA DE CAJU",u:"KG"},{n:"POLPA DE CUPUAÇU",u:"KG"},{n:"POLPA DE GOIABA",u:"KG"},{n:"POLPA DE GRAVIOLA",u:"KG"},{n:"POLPA DE MANGA",u:"KG"},{n:"POLPA DE MARACUJÁ",u:"KG"},{n:"POLPA DE TAMARINDO",u:"KG"}
+  ]},
+  "LATICÍNIOS":{cor:"#D97706",emoji:"🧀",itens:[
+    {n:"BACON FATIADO",u:"KG"},{n:"CHANTMIX",u:"LITRO"},{n:"CLARA PASTEURIZADA",u:"500G"},{n:"CREAM CHEESE",u:"KG"},{n:"CREME DE LEITE FRESCO",u:"500G"},{n:"LEITE PASTEURIZADO (SACO)",u:"LITRO"},{n:"MANTEIGA COM SAL",u:"10KG"},{n:"MANTEIGA SEM SAL",u:"5 KG"},{n:"MARGARINA (FUNCIONÁRIO)",u:"500G"},{n:"NATA FRESCA",u:"3,4 KG"},{n:"PRESUNTO SADIA",u:"3,5KG"},{n:"QUEIJO CATUPIRY",u:"1,5kg"},{n:"QUEIJO CHEDDAR",u:"KG"},{n:"QUEIJO COALHO",u:"KG"},{n:"QUEIJO GORGONZOLA",u:"KG"},{n:"QUEIJO MINAS FRESCAL",u:"KG"},{n:"QUEIJO MUSSARELA",u:"KG"},{n:"QUEIJO MUSSARELA BÚFALA (CEREJA)",u:"400G"},{n:"QUEIJO PARMESÃO",u:"KG"},{n:"REQUEIJÃO CREMOSO VIGOR",u:"200G"},{n:"TOMATE SECO 3,5KG",u:"UND"}
+  ]},
+  "CARNES":{cor:"#B91C1C",emoji:"🥩",itens:[
+    {n:"ACÉM BOVINO",u:"KG"},{n:"ALCATRA",u:"KG"},{n:"BACON MANTA",u:"KG"},{n:"BISTECA SUÍNA (FUNCIONÁRIO)",u:"KG"},{n:"CABEÇA DE CAMARÃO",u:"KG"},{n:"CABEÇA DE PEIXE",u:"KG"},{n:"CARNE MOÍDA PATINHO",u:"KG"},{n:"CARPACCIO DE CARNE",u:"KG"},{n:"CHARQUE",u:"KG"},{n:"COSTELA BOVINA (FUNCIONÁRIO)",u:"KG"},{n:"COSTELA SUÍNA SALGADA",u:"KG"},{n:"COXA E SOBRECOXA C/ OSSO (FUNC.)",u:"KG"},{n:"COXÃO MOLE",u:"KG"},{n:"COXINHA DA ASA DE FRANGO",u:"KG"},{n:"CUPIM BOVINO INTEIRO",u:"KG"},{n:"FILÉ DE MERLUZA / PESCADA BRANCA",u:"KG"},{n:"HAMBÚRGUER",u:"UND"},{n:"LINGUIÇA CALABRESA (FUNCIONÁRIO)",u:"KG"},{n:"LINGUIÇA CALABRESA RETA",u:"KG"},{n:"LINGUIÇA PAIO",u:"KG"},{n:"LINGUIÇA SUÍNA TOSCANA",u:"KG"},{n:"LOMBO SUÍNO SALGADO",u:"KG"},{n:"LOMBO SUÍNO SEM OSSO FUNC.",u:"KG"},{n:"ORELHA SALGADA",u:"KG"},{n:"OSSO BUCO",u:"KG"},{n:"PALETA BOVINA",u:"KG"},{n:"PATINHO BOVINO",u:"KG"},{n:"PÉ SALGADO",u:"KG"},{n:"PERNIL",u:"KG"},{n:"PICANHA SUÍNA",u:"KG"},{n:"RABO SALGADO",u:"KG"},{n:"SASSAME",u:"KG"},{n:"TORRESMO",u:"KG"}
+  ]},
+  "PORÇÕES":{cor:"#0F766E",emoji:"🍤",itens:[
+    {n:"BACALHAU 250G",u:"UND"},{n:"BACALHAU 500G",u:"UND"},{n:"CAMARÃO 36/40",u:"UND"},{n:"CAMARÃO 41/60",u:"UND"},{n:"CAMARÃO 80/100 RECIFE",u:"UND"},{n:"CAMARÃO APERITIVO",u:"UND"},{n:"CAMARÃO CROCANTE",u:"UND"},{n:"CAMARÃO JANGADEIRO",u:"UND"},{n:"CAMARÃO MEIA-REDE",u:"UND"},{n:"CAMARÃO PROVENÇAL",u:"UND"},{n:"CARNE DE SOL CUBOS 100G",u:"UND"},{n:"CARNE DE SOL DES. 10G",u:"UND"},{n:"CARNE DE SOL DES. 70G",u:"UND"},{n:"CARNE DE SOL DES. 200G",u:"UND"},{n:"FILÉ DE SALMÃO",u:"UND"},{n:"FILÉ DE SALMÃO CEVICHE",u:"UND"},{n:"FILÉ MIGNON APERITIVO 100G",u:"UND"},{n:"FILÉ MIGNON APERITIVO 300G",u:"UND"},{n:"FILÉ MIGNON KIDS",u:"UND"},{n:"FILÉ MIGNON PARME",u:"UND"},{n:"FILÉ MIGNON PAULISTA",u:"UND"},{n:"FILÉ MIGNON PRATO 200G",u:"UND"},{n:"FRANGO 200G",u:"UND"},{n:"FRANGO KIDS 100G",u:"UND"},{n:"HAMBÚRGUER",u:"UND"},{n:"LAGOSTA T4",u:"UND"},{n:"LULA 50G",u:"UND"},{n:"LULA 200G",u:"UND"},{n:"MAMINHA",u:"UND"},{n:"MEXILHÃO 50G",u:"UND"},{n:"PEIXE CUBOS 30G",u:"UND"},{n:"PEIXE CUBOS 100G",u:"UND"},{n:"PEIXE CUBOS 250G",u:"UND"},{n:"PEIXE ISCA 130G",u:"UND"},{n:"PEIXE PRATO 400G",u:"UND"},{n:"PEIXE REDE 200G",u:"UND"},{n:"PICANHA",u:"UND"},{n:"POLVO 50G",u:"UND"},{n:"POLVO 200G",u:"UND"},{n:"SIRIGADO",u:"UND"},{n:"STROGONOFF 400G",u:"UND"},{n:"TILÁPIA 150G",u:"UND"},{n:"TILÁPIA 270G",u:"UND"},{n:"TILÁPIA 440G",u:"UND"},{n:"TILÁPIA KIDS",u:"UND"}
+  ]},
+  "PLUS":{cor:"#BE185D",emoji:"🎂",itens:[
+    {n:"ÁLCOOL DE CEREAIS 500ML",u:"UND"},{n:"BALA DE GOMA",u:"UND"},{n:"CHOCO POWER MINIBALL 500G",u:"UND"},{n:"CORANTE EM GEL VERMELHO",u:"UND"},{n:"FORMA DE BRIGADEIRA N5 MARROM",u:"UND"},{n:"GELATINA MORANGO",u:"UND"},{n:"GOIABADA 200G",u:"UND"},{n:"GRANULADO AMARELO",u:"UND"},{n:"GRANULADO AZUL",u:"UND"},{n:"GRANULADO BRANCO",u:"UND"},{n:"GRANULADO LARANJA",u:"UND"},{n:"GRANULADO MELKEN GOURMET 400G",u:"UND"},{n:"GRANULADO ROSA",u:"UND"},{n:"GRANULADO ROXO",u:"UND"},{n:"GRANULADO VERDE",u:"UND"},{n:"GRANULADO VERMELHO",u:"UND"},{n:"MIÇANGA AMARELA",u:"UND"},{n:"MIÇANGA AZUL",u:"UND"},{n:"MIÇANGA BRANCA",u:"UND"},{n:"MIÇANGA ROSA",u:"UND"},{n:"MIÇANGA ROXA",u:"UND"},{n:"MIÇANGA VERDE",u:"UND"},{n:"MIÇANGA VERMELHO",u:"UND"},{n:"PÃO HOT DOG",u:"UND"},{n:"PASTA AMERICANA BRANCA",u:"UND"},{n:"PÓ DECORAÇÃO DOURADO ANTIGO",u:"UND"}
+  ]},
+  "MERCADO":{cor:"#4338CA",emoji:"🛒",itens:[
+    {n:"IOGURTE NATURAL COM MEL (NESTLÉ)",u:"170g"},{n:"IOGURTE NATURAL (NESTLÉ)",u:"170g"},{n:"KANI KAMA",u:"100G"},{n:"REQUEIJÃO CREMOSO VIGOR",u:"200g"}
+  ]},
+  "CEASA":{cor:"#15803D",emoji:"🥦",itens:[
+    {n:"ABACAXI",u:"UND"},{n:"ABÓBORA JAPONESA",u:"KG"},{n:"ABÓBORA PESCOÇO (PURÊ)",u:"KG"},{n:"ABOBRINHA",u:"KG"},{n:"ALECRIM",u:"UND"},{n:"ALFACE AMERICANA",u:"UND"},{n:"ALFACE CRESPA",u:"UND"},{n:"ALFACE ROXA",u:"UND"},{n:"ALHO COM CASCA",u:"KG"},{n:"ALHO DESCASCADO",u:"KG"},{n:"ALHO PORÓ",u:"UND"},{n:"BANANA PRATA KG",u:"KG"},{n:"BATATA INGLESA",u:"KG"},{n:"BERINJELA",u:"KG"},{n:"CAJU",u:"UND"},{n:"CEBOLA BRANCA GRANDE",u:"KG"},{n:"CEBOLA ROXA",u:"KG"},{n:"CEBOLINHA",u:"UND"},{n:"CENOURA",u:"KG"},{n:"COCO SECO",u:"KG"},{n:"COCO VERDE",u:"UND"},{n:"COENTRO",u:"UND"},{n:"COGUMELO PARIS",u:"BDJ"},{n:"COUVE FLOR",u:"UND"},{n:"COUVE-MANTEIGA",u:"UND"},{n:"GENGIBRE",u:"KG"},{n:"HORTELÃ",u:"UND"},{n:"KIWI",u:"KG"},{n:"LARANJA",u:"KG"},{n:"LARANJA BAHIA",u:"KG"},{n:"LIMA DA PÉRSIA",u:"KG"},{n:"LIMÃO SICILIANO",u:"KG"},{n:"LIMÃO TAITI",u:"KG"},{n:"MAÇÃ FUJI",u:"KG"},{n:"MAÇÃ VERDE",u:"KG"},{n:"MANDIOCA DESCASCADA",u:"KG"},{n:"MANDIOQUINHA",u:"KG"},{n:"MANGA TOMMY",u:"KG"},{n:"MANJERICÃO",u:"UND"},{n:"MARACUJÁ",u:"KG"},{n:"MELANCIA",u:"UND"},{n:"MORANGO BANDEJA",u:"UND"},{n:"OVO DE GALINHA",u:"30 UND"},{n:"PIMENTA DE CHEIRO",u:"KG"},{n:"PIMENTA DEDO DE MOÇA",u:"KG"},{n:"PIMENTÃO AMARELO",u:"KG"},{n:"PIMENTÃO VERDE",u:"KG"},{n:"PIMENTÃO VERMELHO",u:"KG"},{n:"RÚCULA",u:"UND"},{n:"SALSA LISA (SALSINHA)",u:"UND"},{n:"SALSÃO",u:"UND"},{n:"SHIITAKE",u:"BDJ"},{n:"TANGERINA",u:"KG"},{n:"TOMATE CEREJA",u:"BDJ"},{n:"TOMATE MOLHO",u:"KG"},{n:"TOMATE SALADA",u:"KG"},{n:"TOMILHO FRESCO",u:"UND"},{n:"UVA PASSA PRETA SEM CAROÇO",u:"KG"},{n:"UVA THOMPSON SEM CAROÇO",u:"KG"},{n:"LEITE PASTEURIZADO",u:"LT"},{n:"CHOPP BRAHMA",u:"50 L"},{n:"CHOPP STELLA",u:"30 L"}
+  ]}
+};
+// ===== DATA =====
+// CATS_PLACEHOLDER
+
+const KEYS = Object.keys(CATS);
+var CUR = KEYS[0];
+var FLT = 'todos';
+var pdfData = null;
+var pdfSel = new Set();
+
+function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
+function save(){try{localStorage.setItem('estoq4',JSON.stringify(DB));}catch(e){alert('Erro ao salvar: '+e.message);}}
+var DB=load();
+if(!DB.est)DB.est={};
+if(!DB.hist)DB.hist=[];
+
+function gi(cat,nome){
+  if(DB.est[cat]&&DB.est[cat][nome]!=null)return DB.est[cat][nome];
+  return{min:'',est:''};
+}
+function si(cat,nome,campo,val){
+  if(!DB.est[cat])DB.est[cat]={};
+  if(!DB.est[cat][nome])DB.est[cat][nome]={min:'',est:''};
+  DB.est[cat][nome][campo]=val;
+  save();
+  refreshHome();
+}
+
+// Enter/Go avança para o próximo input
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!=='Go')return;
+  var t=e.target;
+  if(!t.dataset||!t.dataset.cat)return;
+  e.preventDefault();
+  var all=Array.from(document.querySelectorAll('input[data-cat]'));
+  var idx=all.indexOf(t);
+  if(idx>=0&&idx<all.length-1){
+    var next=all[idx+1];
+    next.focus();
+    next.select();
+    next.scrollIntoView({block:'center',behavior:'smooth'});
+  }else{
+    t.blur();
+  }
+});
+
+// Single delegated listener — no inline JS in inputs
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.dataset&&t.dataset.cat){
+    var cat=decodeURIComponent(t.dataset.cat);
+    var nome=decodeURIComponent(t.dataset.nome);
+    var campo=t.dataset.campo;
+    si(cat,nome,campo,t.value);
+    if(campo==='min')renderCfg();
+    else renderItems();
+  }
+});
+
+function calcAll(){
+  var out=[];
+  KEYS.forEach(function(k){
+    CATS[k].itens.forEach(function(item){
+      var d=gi(k,item.n);
+      var mn=parseFloat(d.min);
+      if(isNaN(mn))return;
+      var es=parseFloat(d.est);
+      var buy=(!isNaN(es)&&es<mn)?+(mn-es).toFixed(2):0;
+      out.push({cat:k,nome:item.n,und:item.u,mn:mn,es:isNaN(es)?'':es,buy:buy});
+    });
+  });
+  return out;
+}
+function calcNeed(){return calcAll().filter(function(i){return i.buy>0;});}
+
+var SCREENS=['home','contagem','pedido','historico','config'];
+function go(s){
+  SCREENS.forEach(function(id){
+    var el=document.getElementById('s-'+id);
+    if(el)el.classList.toggle('hidden',id!==s);
+  });
+  if(s==='home')refreshHome();
+  else if(s==='contagem'){document.getElementById('cnt-srch').value='';renderCntUI();}
+  else if(s==='pedido')renderPedido();
+  else if(s==='historico')renderHist();
+  else if(s==='config'){document.getElementById('cfg-srch').value='';renderCfgUI();}
+}
+
+function refreshHome(){
+  var total=0,counted=0;
+  KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){total++;if(gi(k,i.n).est!=='')counted++;});});
+  document.getElementById('hdr-sub').textContent=counted+' / '+total+' itens contados';
+  document.getElementById('prog-fill').style.width=(total>0?(counted/total*100).toFixed(1):0)+'%';
+  var need=calcNeed();
+  document.getElementById('pedido-desc').textContent=need.length+' itens para repor';
+  var bdg=document.getElementById('bdg');
+  if(need.length>0){bdg.textContent=need.length;bdg.classList.remove('hidden');}
+  else bdg.classList.add('hidden');
+  var html='';
+  KEYS.forEach(function(k){
+    var c=CATS[k];
+    var ct=c.itens.filter(function(i){return gi(k,i.n).est!=='';}).length;
+    var pct=(ct/c.itens.length*100).toFixed(1);
+    html+='<button class="cat-row" onclick="CUR=decodeURIComponent(\'' +encodeURIComponent(k)+ '\');go(\'contagem\')">'
+      +'<span class="cr-emoji">'+c.emoji+'</span>'
+      +'<div class="cr-info"><span class="cr-name">'+k+'</span>'
+      +'<div class="cr-bar"><div class="cr-fill" style="width:'+pct+'%;background:'+c.cor+'"></div></div></div>'
+      +'<span class="cr-count" style="color:'+c.cor+'">'+ct+'/'+c.itens.length+'</span></button>';
+  });
+  document.getElementById('cat-rows').innerHTML=html;
+}
+
+function renderCntUI(){
+  var c=CATS[CUR];
+  document.getElementById('cnt-topbar').style.borderColor=c.cor;
+  document.getElementById('cnt-ttl').textContent=c.emoji+' '+CUR;
+  var tabs='';
+  KEYS.forEach(function(k){
+    var enc=encodeURIComponent(k);
+    tabs+='<button class="tab" onclick="CUR=decodeURIComponent(\''+enc+'\');document.getElementById(\'cnt-srch\').value=\'\';renderCntUI()" '
+      +'style="background:'+(k===CUR?CATS[k].cor:'#3d1f08')+';color:'+(k===CUR?'#fff':'#aaa')+'">'+CATS[k].emoji+'</button>';
+  });
+  document.getElementById('cnt-tabs').innerHTML=tabs;
+  renderItems();
+  var idx=KEYS.indexOf(CUR);
+  document.getElementById('btn-prev').disabled=idx===0;
+  document.getElementById('btn-next').disabled=idx===KEYS.length-1;
+}
+function navCat(d){CUR=KEYS[KEYS.indexOf(CUR)+d];document.getElementById('cnt-srch').value='';renderCntUI();}
+
+function renderItems(){
+  var busca=document.getElementById('cnt-srch').value.toLowerCase();
+  var c=CATS[CUR];
+  var ct=c.itens.filter(function(i){return gi(CUR,i.n).est!=='';}).length;
+  document.getElementById('cnt-bdg').textContent=ct+'/'+c.itens.length;
+  document.getElementById('cnt-bdg').style.background=c.cor;
+  var list=busca?c.itens.filter(function(i){return i.n.toLowerCase().indexOf(busca)>=0;}):c.itens;
+  var html='';
+  list.forEach(function(item){
+    var d=gi(CUR,item.n);
+    var mn=parseFloat(d.min),es=parseFloat(d.est);
+    var low=!isNaN(mn)&&!isNaN(es)&&es<mn;
+    var ok=d.est!=='';
+    var bord=low?'#ef4444':ok?'#22c55e':'#5c3010';
+    var compTxt=(!isNaN(mn)&&!isNaN(es))?(low?(mn-es).toFixed(1).replace(/\.0$/,''):'0'):'--';
+    var encCat=encodeURIComponent(CUR);
+    var encNome=encodeURIComponent(item.n);
+    html+='<div class="icard" style="border-color:'+bord+'">'
+      +'<div class="itop"><span class="iname">'+item.n+'</span><span class="iund">'+item.u+'</span></div>'
+      +'<div class="irow">'
+      +'<div class="ig"><label class="ilbl">MINIMO</label>'
+      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
+      +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE</label>'
+      +'<input class="inum" type="number" inputmode="decimal" placeholder="0" value="'+(d.est||'')+'"'
+      +' style="border-color:'+(ok?c.cor:'#5c3010')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est"></div>'
+      +'<div class="ig"><label class="ilbl">COMPRAR</label>'
+      +'<div class="icomp'+(low?' low':'')+'">'+compTxt+'</div></div>'
+      +'</div></div>';
+  });
+  document.getElementById('ilist').innerHTML=html;
+}
+
+function renderPedido(){
+  var all=calcAll();
+  var need=all.filter(function(i){return i.buy>0;});
+  document.getElementById('ped-bdg').textContent=need.length;
+  var el=document.getElementById('ped-body');
+  if(all.length===0){
+    el.innerHTML='<div class="empty"><div class="ei">&#9881;</div>'
+      +'<p class="et" style="color:#888;font-size:16px">Configure os minimos</p>'
+      +'<p class="ed">Acesse Configurar Minimos para definir os estoques minimos.</p></div>';
+    return;
+  }
+  var byCat={};
+  all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  var html='<div class="abtns">'
+    +'<button class="abtn" style="background:#22c55e" onclick="copyList()">&#128203; Copiar Lista Completa</button>'
+    +'<button class="abtn" style="background:#25d366" onclick="shareWA()">&#128242; Compartilhar no WhatsApp</button>'
+    +'<button class="abtn" style="background:#5c2d0e" onclick="openSaveModal()">&#128190; Salvar no Historico</button>'
+    +'<button class="abtn" style="background:#d97706" onclick="openPdfModal(null)">&#128196; Exportar PDF por Categoria</button>'
+    +'</div>';
+  Object.entries(byCat).forEach(function(entry){
+    var cat=entry[0],items=entry[1];
+    var c=CATS[cat];
+    var needCt=items.filter(function(i){return i.buy>0;}).length;
+    html+='<div class="pcat">'
+      +'<div class="pcath" style="background:'+c.cor+'22;border-left:4px solid '+c.cor+'">'
+      +'<span>'+c.emoji+' '+cat+'</span>'
+      +'<span style="color:'+c.cor+';font-weight:700">'+needCt+'/'+items.length+' repor</span></div>';
+    items.forEach(function(i){
+      var low=i.buy>0;
+      html+='<div class="pitem" style="border-left-color:'+(low?'#ef4444':'#22c55e')+'">'
+        +'<div class="pname">'+i.nome+'</div>'
+        +'<div class="pinfo">'
+        +'<span class="pest">Estoque: '+(i.es===''?'--':i.es)+' '+i.und+'</span>'
+        +(low?'<span class="pbuy-need">Comprar: '+i.buy+' '+i.und+'</span>'
+             :(i.es===''?'<span style="color:#888;font-weight:700">Não contado</span>'
+                        :'<span class="pbuy-ok">&#10003; OK</span>'))
+        +'</div></div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function copyList(){
+  var all=calcAll();
+  var dt=new Date().toLocaleDateString('pt-BR');
+  var byCat={};
+  all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  var txt='LISTA DE COMPRAS - COCO BAMBU TUCURUVI\n'+dt+'\n\n';
+  Object.entries(byCat).forEach(function(e){
+    var cat=e[0],items=e[1];
+    txt+=CATS[cat].emoji+' '+cat+'\n';
+    items.forEach(function(i){
+      txt+=(i.buy>0?'[ ] '+i.nome+' -- '+i.buy+' '+i.und:'[ok] '+i.nome)+'\n';
+    });
+    txt+='\n';
+  });
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){alert('Lista copiada!');}).catch(function(){fbCopy(txt);});
+  }else{fbCopy(txt);}
+}
+function fbCopy(txt){
+  var ta=document.createElement('textarea');
+  ta.value=txt;ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');alert('Lista copiada!');}
+  catch(e){alert('Nao foi possivel copiar automaticamente.');}
+  document.body.removeChild(ta);
+}
+
+function shareWA(){
+  var all=calcAll();
+  var need=all.filter(function(i){return i.buy>0;});
+  if(need.length===0){alert('Nenhum item para repor no momento.');return;}
+  var dt=new Date().toLocaleDateString('pt-BR');
+  var byCat={};
+  need.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  var txt='*LISTA DE COMPRAS - COCO BAMBU TUCURUVI*\n_'+dt+'_\n\n';
+  Object.entries(byCat).forEach(function(e){
+    var cat=e[0],items=e[1];
+    txt+='*'+CATS[cat].emoji+' '+cat+'*\n';
+    items.forEach(function(i){txt+='  - '+i.nome+': '+i.buy+' '+i.und+'\n';});
+    txt+='\n';
+  });
+  var encoded=encodeURIComponent(txt);
+  var url='https://api.whatsapp.com/send?text='+encoded;
+  var win=window.open(url,'_blank');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).catch(function(){});
+  }else{
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=txt;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+      document.body.appendChild(ta);ta.focus();ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){}
+  }
+  setTimeout(function(){
+    if(!win||win.closed){
+      alert('Pop-up bloqueado. A lista foi copiada — cole com Ctrl+V (ou segurar e colar no celular).');
+    }
+  },800);
+}
+
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+function openSaveModal(){
+  document.getElementById('m-ttl').textContent='Salvar no Historico';
+  document.getElementById('m-sub').textContent='De um nome para identificar este pedido';
+  document.getElementById('m-inp').value='Inventario '+new Date().toLocaleDateString('pt-BR');
+  document.getElementById('m-ok').onclick=function(){
+    var nome=document.getElementById('m-inp').value.trim()||'Inventario sem nome';
+    closeModal('m-nome');saveHist(nome);
+  };
+  openModal('m-nome');
+  setTimeout(function(){document.getElementById('m-inp').select();},150);
+}
+function novaContagem(){
+  if(!confirm('Zerar toda a contagem atual?'))return;
+  document.getElementById('m-ttl').textContent='Nova Contagem';
+  document.getElementById('m-sub').textContent='Registre um nome antes de zerar';
+  document.getElementById('m-inp').value='Inventario '+new Date().toLocaleDateString('pt-BR');
+  document.getElementById('m-ok').onclick=function(){
+    var nome=document.getElementById('m-inp').value.trim()||'Inventario sem nome';
+    closeModal('m-nome');
+    var need=calcNeed();
+    if(need.length>0)saveHist(nome);
+    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+    save();refreshHome();
+  };
+  openModal('m-nome');
+  setTimeout(function(){document.getElementById('m-inp').select();},150);
+}
+function saveHist(nome){
+  var need=calcNeed();
+  if(need.length===0){alert('Nenhum item para repor.');return;}
+  var byCat={};
+  need.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  DB.hist.unshift({id:Date.now(),nome:nome,data:new Date().toISOString(),
+    dataStr:new Date().toLocaleDateString('pt-BR'),total:need.length,byCat:byCat});
+  save();alert('"'+nome+'" salvo no historico!');
+}
+
+function setFlt(f,btn){
+  FLT=f;
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('dt-row').classList.toggle('hidden',f!=='custom');
+  renderHist();
+}
+function filterHist(){
+  var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return DB.hist.filter(function(h){
+    var d=new Date(h.data);
+    if(FLT==='todos')return true;
+    if(FLT==='7'){var l=new Date(today);l.setDate(l.getDate()-7);return d>=l;}
+    if(FLT==='30'){var l=new Date(today);l.setDate(l.getDate()-30);return d>=l;}
+    if(FLT==='mes')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    if(FLT==='custom'){
+      var f=document.getElementById('dt-from').value,t=document.getElementById('dt-to').value;
+      if(!f&&!t)return true;
+      if(f&&d<new Date(f+'T00:00:00'))return false;
+      if(t&&d>new Date(t+'T23:59:59'))return false;
+      return true;
+    }
+    return true;
+  });
+}
+function renderHist(){
+  var list=filterHist();
+  var el=document.getElementById('hlist');
+  if(list.length===0){el.innerHTML='<div class="hempty">Nenhum pedido encontrado.</div>';return;}
+  var html='';
+  list.forEach(function(h){
+    var dets='';
+    Object.entries(h.byCat).forEach(function(e){
+      var cat=e[0],items=e[1];
+      dets+='<div class="hctitle">'+(CATS[cat]?CATS[cat].emoji:'')+' '+cat+'</div>';
+      items.forEach(function(i){
+        dets+='<div class="hrow"><span class="hrname">'+i.nome+'</span>'
+          +'<span class="hrqty" style="color:#ef4444">'+i.buy+' '+i.und+'</span></div>';
+      });
+    });
+    html+='<div class="hcard">'
+      +'<div class="hcardh"><div><div class="hdname">'+h.nome+'</div><div class="hdmeta">'+h.dataStr+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:5px">'
+      +'<span class="hcnt">'+h.total+' itens</span>'
+      +'<button class="pdfbtn" onclick="openPdfModal('+h.id+')">PDF</button>'
+      +'<button class="delbtn" onclick="delHist('+h.id+')">X</button></div></div>'
+      +'<button class="hexp" onclick="togHist(this)"><span>Ver detalhes</span><span>v</span></button>'
+      +'<div class="hbody hidden">'+dets+'</div></div>';
+  });
+  el.innerHTML=html;
+}
+function togHist(btn){
+  var b=btn.nextElementSibling;
+  var open=!b.classList.contains('hidden');
+  b.classList.toggle('hidden',open);
+  btn.querySelector('span:last-child').textContent=open?'v':'^';
+  btn.querySelector('span:first-child').textContent=open?'Ver detalhes':'Ocultar';
+}
+function delHist(id){
+  if(!confirm('Remover este registro?'))return;
+  DB.hist=DB.hist.filter(function(h){return h.id!==id;});
+  save();renderHist();
+}
+
+function renderCfgUI(){
+  var c=CATS[CUR];
+  document.getElementById('cfg-ttl').textContent='Minimos: '+CUR;
+  document.getElementById('cfg-topbar').style.borderColor=c.cor;
+  var tabs='';
+  KEYS.forEach(function(k){
+    var enc=encodeURIComponent(k);
+    tabs+='<button class="tab" onclick="CUR=decodeURIComponent(\''+enc+'\');document.getElementById(\'cfg-srch\').value=\'\';renderCfgUI()" '
+      +'style="background:'+(k===CUR?CATS[k].cor:'#3d1f08')+';color:'+(k===CUR?'#fff':'#aaa')+'">'+CATS[k].emoji+'</button>';
+  });
+  document.getElementById('cfg-tabs').innerHTML=tabs;
+  renderCfg();
+}
+function renderCfg(){
+  var busca=document.getElementById('cfg-srch').value.toLowerCase();
+  var c=CATS[CUR];
+  var list=busca?c.itens.filter(function(i){return i.n.toLowerCase().indexOf(busca)>=0;}):c.itens;
+  var html='';
+  list.forEach(function(item){
+    var d=gi(CUR,item.n);
+    var encCat=encodeURIComponent(CUR);
+    var encNome=encodeURIComponent(item.n);
+    html+='<div class="icard" style="border-color:'+(d.min?c.cor:'#5c3010')+'">'
+      +'<div class="itop"><span class="iname">'+item.n+'</span><span class="iund">'+item.u+'</span></div>'
+      +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE MINIMO</label>'
+      +'<input class="inum" type="number" inputmode="decimal" placeholder="Definir minimo..." value="'+(d.min||'')+'"'
+      +' style="width:100%;border-color:'+(d.min?c.cor:'#5c3010')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min">'
+      +'</div></div>';
+  });
+  document.getElementById('cfg-list').innerHTML=html;
+}
+
+// ===== PDF =====
+function openPdfModal(histId){
+  var source=histId?DB.hist.find(function(h){return h.id===histId;}):null;
+  var byCat;
+  if(source){
+    byCat=source.byCat;
+    document.getElementById('m-pdf-sub').textContent=source.nome+' ('+source.dataStr+')';
+    pdfData={nome:source.nome,dataStr:source.dataStr,byCat:byCat};
+  }else{
+    var all=calcAll();
+    byCat={};
+    all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+    var dt=new Date().toLocaleDateString('pt-BR');
+    document.getElementById('m-pdf-sub').textContent='Lista completa - '+dt;
+    pdfData={nome:'Lista de Compras',dataStr:dt,byCat:byCat};
+  }
+  var cats=Object.keys(byCat);
+  pdfSel=new Set(cats);
+  var html='';
+  cats.forEach(function(cat){
+    var c=CATS[cat]||{emoji:'',cor:'#333'};
+    var cnt=byCat[cat].length;
+    var needCnt=byCat[cat].filter(function(i){return i.buy>0;}).length;
+    // Use data attribute on div instead of inline onclick with quotes
+    html+='<div class="pdf-opt sel" data-pdfcat="'+encodeURIComponent(cat)+'">'
+      +'<div class="pdf-chk">&#10003;</div>'
+      +'<div><div class="pdf-lbl">'+c.emoji+' '+cat+'</div>'
+      +'<div class="pdf-cnt">'+needCnt+' para comprar / '+cnt+' total</div></div></div>';
+  });
+  document.getElementById('pdf-grid').innerHTML=html;
+  // Use event delegation for pdf-opt clicks
+  document.getElementById('pdf-grid').onclick=function(e){
+    var opt=e.target.closest('.pdf-opt');
+    if(!opt)return;
+    var cat=decodeURIComponent(opt.dataset.pdfcat);
+    var chk=opt.querySelector('.pdf-chk');
+    if(pdfSel.has(cat)){pdfSel.delete(cat);opt.classList.remove('sel');chk.innerHTML='';}
+    else{pdfSel.add(cat);opt.classList.add('sel');chk.innerHTML='&#10003;';}
+  };
+  openModal('m-pdf');
+}
+function pdfToggleAll(){
+  var cats=Object.keys(pdfData.byCat);
+  var allSel=cats.every(function(c){return pdfSel.has(c);});
+  document.querySelectorAll('.pdf-opt').forEach(function(opt){
+    var cat=decodeURIComponent(opt.dataset.pdfcat);
+    var chk=opt.querySelector('.pdf-chk');
+    if(allSel){pdfSel.delete(cat);opt.classList.remove('sel');chk.innerHTML='';}
+    else{pdfSel.add(cat);opt.classList.add('sel');chk.innerHTML='&#10003;';}
+  });
+}
+
+function buildPdfHtml(cats,pdfData){
+  var now=new Date().toLocaleString('pt-BR');
+  var pages='';
+  cats.forEach(function(cat){
+    var info=CATS[cat]||{emoji:'',cor:'#333'};
+    var items=pdfData.byCat[cat];
+    var rows='';
+    items.forEach(function(item,idx){
+      var bg=idx%2===1?'#f9f9f9':'#fff';
+      var low=item.buy>0;
+      rows+='<tr>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;background:'+bg+'">'+item.nome+'</td>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+item.und+'</td>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+(item.es===''?'-':item.es)+'</td>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+item.mn+'</td>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;font-weight:bold;color:'+(low?'#cc0000':'#16a34a')+';background:'+bg+'">'+(low?String(item.buy):'OK')+'</td>'
+        +'<td style="padding:5px 7px;border:1px solid #ddd;background:'+bg+'"></td>'
+        +'</tr>';
+    });
+    pages+='<div style="padding:16px 20px;page-break-after:always;font-family:Arial,sans-serif;color:#000;">'
+      +'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr>'
+      +'<td style="border:none;padding:0;"><div style="font-size:15px;font-weight:900;">Coco Bambu Tucuruvi</div><div style="font-size:9px;color:#888;margin-top:1px;">Controle de Estoque</div></td>'
+      +'<td style="border:none;padding:0;text-align:right;font-size:9px;color:#777;line-height:1.7;">'+pdfData.nome+'<br>'+pdfData.dataStr+'<br>Gerado: '+now+'</td>'
+      +'</tr></table>'
+      +'<div style="height:2px;background:#333;margin-bottom:10px;"></div>'
+      +'<div style="font-size:14px;font-weight:800;padding:5px 10px;border-left:5px solid '+info.cor+';background:#f5f5f5;margin-bottom:8px;">'+info.emoji+' '+cat+'</div>'
+      +'<div style="font-size:10px;color:#555;margin-bottom:10px;padding:4px 8px;background:#fffde7;border-left:3px solid #f59e0b;">'
+      +items.filter(function(x){return x.buy>0;}).length+' para comprar | '+items.length+' itens total</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+      +'<tr style="background:#e0e0e0;">'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:left;width:36%;">PRODUTO</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:8%;">UNID.</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:10%;">ESTOQUE</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:8%;">MIN.</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:10%;">COMPRAR</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:left;width:28%;">OBSERVACAO</th>'
+      +'</tr>'+rows
+      +'</table>'
+      +'<p style="font-size:8px;color:#bbb;text-align:right;margin-top:5px;">'+cat+' - '+pdfData.dataStr+'</p>'
+      +'</div>';
+  });
+  return pages;
+}
+
+function doPDF(){
+  if(pdfSel.size===0){alert('Selecione pelo menos uma categoria.');return;}
+  closeModal('m-pdf');
+  var cats=KEYS.filter(function(c){return pdfSel.has(c)&&pdfData.byCat[c];});
+  if(cats.length===0){alert('Nenhuma categoria valida.');return;}
+
+  var pages=buildPdfHtml(cats,pdfData);
+  var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>'+pdfData.nome+' - '+pdfData.dataStr+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#000}'
+    +'@media print{.no-print{display:none!important}@page{margin:8mm}}'
+    +'@media screen{'
+    +'.no-print{position:fixed;bottom:0;left:0;right:0;background:#1a0e02;padding:12px 16px;display:flex;gap:10px;z-index:999;box-shadow:0 -2px 12px rgba(0,0,0,.5)}'
+    +'.no-print button{flex:1;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer}'
+    +'.btn-print{background:#5c2d0e;color:#fff}'
+    +'.btn-share{background:#25d366;color:#fff}'
+    +'body{padding-bottom:80px}}'
+    +'</style>'
+    +'</head><body>'
+    +pages
+    +'<div class="no-print">'
+    +(isMobile
+      ?'<button class="btn-print" onclick="window.print()">&#128438; Salvar PDF</button>'
+       +'<button class="btn-share" onclick="doShare()">&#128279; Compartilhar</button>'
+      :'<button class="btn-print" onclick="window.print()" style="max-width:280px;margin:0 auto">&#128438; Imprimir / Salvar PDF</button>'
+    )
+    +'</div>'
+    +'<script>'
+    +'function doShare(){'
+    +'  if(!navigator.share){window.print();return;}'
+    +'  window.print();'
+    +'}'
+    +(isMobile?''  : 'setTimeout(function(){window.print();},600);')
+    +'<\/script>'
+    +'</body></html>';
+
+  var blob=new Blob([doc],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var win=window.open(url,'_blank');
+  if(!win||win.closed){
+    // Pop-up bloqueado — abre via link temporário
+    var a=document.createElement('a');
+    a.href=url;
+    a.target='_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  setTimeout(function(){URL.revokeObjectURL(url);},60000);
+}
+
+// ===== SYNC =====
+var SYNC_URL = localStorage.getItem('sync_url') || 'https://almox-cocobambu-tucuruvi-default-rtdb.firebaseio.com';
+var FIREBASE_API_KEY = 'AIzaSyAsTy24Qo3HKcrEubRiyBE5LGzmwXv9r9s';
+var _syncPushing = false;
+var _syncSource = null;
+var _authToken = localStorage.getItem('fb_auth_token') || '';
+var _authExpiry = parseInt(localStorage.getItem('fb_auth_expiry') || '0');
+
+function syncEndpoint(){ return SYNC_URL.replace(/\/$/,'')+'/estoq4.json'+(_authToken?'?auth='+_authToken:''); }
+
+function fbSignInAnon(callback){
+  var now = Date.now();
+  if(_authToken && _authExpiry > now + 60000){ callback(); return; }
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FIREBASE_API_KEY,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({returnSecureToken:true})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d.idToken){
+      _authToken = d.idToken;
+      _authExpiry = now + (parseInt(d.expiresIn||3600)*1000);
+      localStorage.setItem('fb_auth_token', _authToken);
+      localStorage.setItem('fb_auth_expiry', String(_authExpiry));
+      callback();
+    } else { callback(); }
+  })
+  .catch(function(){ callback(); });
+}
+
+function syncSetStatus(connected){
+  var dot = document.getElementById('drawer-sync-dot');
+  var lbl = document.getElementById('sync-status');
+  if(dot) dot.style.background = connected ? '#22c55e' : '#555';
+  if(lbl) lbl.innerHTML = connected
+    ? '<span style="color:#22c55e">&#9899; Conectado — sincronizando em tempo real</span>'
+    : '<span style="color:#888">&#9898; Desconectado</span>';
+}
+
+function syncPush(){
+  if(!SYNC_URL) return;
+  fbSignInAnon(function(){
+    _syncPushing = true;
+    fetch(syncEndpoint(),{method:'PUT',body:JSON.stringify(DB),headers:{'Content-Type':'application/json'}})
+      .catch(function(){})
+      .then(function(){ setTimeout(function(){ _syncPushing=false; },1500); });
+  });
+}
+
+function syncApply(data){
+  if(!data||typeof data!=='object') return;
+  DB = data;
+  if(!DB.est) DB.est={};
+  if(!DB.hist) DB.hist=[];
+  try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
+  refreshHome();
+  if(!document.getElementById('s-contagem').classList.contains('hidden')) renderItems();
+  else if(!document.getElementById('s-pedido').classList.contains('hidden')) renderPedido();
+  else if(!document.getElementById('s-historico').classList.contains('hidden')) renderHist();
+  else if(!document.getElementById('s-config').classList.contains('hidden')) renderCfg();
+}
+
+function syncListen(){
+  if(_syncSource){ _syncSource.close(); _syncSource=null; }
+  if(!SYNC_URL){ syncSetStatus(false); return; }
+  fbSignInAnon(function(){
+  var es = new EventSource(syncEndpoint());
+  _syncSource = es;
+  var first = true;
+  es.addEventListener('put',function(e){
+    try{
+      var d = JSON.parse(e.data);
+      if(first){ first=false; syncSetStatus(true); }
+      if(_syncPushing) return;
+      if(d && d.data) syncApply(d.data);
+    }catch(ex){}
+  });
+  es.addEventListener('patch',function(e){
+    try{
+      if(_syncPushing) return;
+      // patch: re-fetch full data
+      fetch(syncEndpoint()).then(function(r){return r.json();}).then(function(data){ syncApply(data); }).catch(function(){});
+    }catch(ex){}
+  });
+  es.onerror = function(){
+    syncSetStatus(false);
+    _syncSource.close();
+    _syncSource = null;
+    setTimeout(syncListen, 6000);
+  };
+  }); // fbSignInAnon
+}
+
+function openSyncModal(){
+  document.getElementById('sync-url-inp').value = SYNC_URL;
+  syncSetStatus(!!_syncSource && _syncSource.readyState!==2);
+  openModal('m-sync');
+}
+
+function saveSync(){
+  var url = document.getElementById('sync-url-inp').value.trim().replace(/\/$/,'');
+  if(!url){ alert('Cole a URL do Firebase.'); return; }
+  SYNC_URL = url;
+  localStorage.setItem('sync_url',url);
+  document.getElementById('sync-ok-btn').textContent='Conectando...';
+  document.getElementById('sync-ok-btn').disabled=true;
+  // Fetch current remote data first, then start listening
+  fbSignInAnon(function(){
+  fetch(syncEndpoint())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data && typeof data==='object') syncApply(data);
+      else syncPush();
+      syncListen();
+      closeModal('m-sync');
+    })
+    .catch(function(){
+      alert('Não foi possível conectar. Verifique a URL e as regras do Firebase.');
+    })
+    .finally(function(){
+      document.getElementById('sync-ok-btn').textContent='Conectar';
+      document.getElementById('sync-ok-btn').disabled=false;
+    });
+  }); // fbSignInAnon
+}
+
+function disconnectSync(){
+  if(!confirm('Desconectar? Os dados ficam salvos localmente.')) return;
+  SYNC_URL='';
+  localStorage.removeItem('sync_url');
+  if(_syncSource){ _syncSource.close(); _syncSource=null; }
+  syncSetStatus(false);
+  closeModal('m-sync');
+}
+
+// Override save to also push to Firebase
+var _localSave = save;
+save = function(){
+  try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){ alert('Erro ao salvar: '+e.message); }
+  syncPush();
+};
+
+function openDrawer(){
+  document.getElementById('drawer').style.display='flex';
+  document.getElementById('drawer-overlay').style.display='block';
+}
+function closeDrawer(){
+  document.getElementById('drawer').style.display='none';
+  document.getElementById('drawer-overlay').style.display='none';
+}
+
+if(SYNC_URL) fbSignInAnon(function(){ syncListen(); });
+go('home');
+
+</script>
+</body>
+</html>
