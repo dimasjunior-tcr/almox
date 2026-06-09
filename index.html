@@ -813,7 +813,11 @@ function openPdfModal(histId){
     document.getElementById('m-pdf-sub').textContent=source.nome+' ('+source.dataStr+')';
     pdfData={nome:source.nome,dataStr:source.dataStr,byCat:byCat,contadores:source.contadores||{}};
   }else{
-    var all=calcAll();
+    var allRawPdf=calcAll();
+    var completeCatsPdf=new Set(KEYS.filter(function(k){
+      return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+    }));
+    var all=allRawPdf.filter(function(i){return completeCatsPdf.has(i.cat);});
     byCat={};
     all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
     var dt=new Date().toLocaleDateString('pt-BR');
