@@ -274,11 +274,19 @@ button{cursor:pointer;font-family:inherit}
   <div class="modal">
     <div class="mtitle">&#128100; Quem está fazendo a contagem?</div>
     <div class="msub">Seu nome aparecerá no PDF das categorias que você contar</div>
-    <input class="minp" id="cnt-nome-inp" placeholder="Digite seu nome..." maxlength="40" autocomplete="off">
-    <div class="mbtns">
-      <button class="mcancel" onclick="closeModal('m-contador')">Cancelar</button>
-      <button class="mok" onclick="confirmarContador()">Iniciar Contagem</button>
+    <div id="cnt-opcoes" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+      <button onclick="selecionarContador('Leandro')" class="mok" style="font-size:15px;padding:14px;">Leandro</button>
+      <button onclick="selecionarContador('Marco')" class="mok" style="font-size:15px;padding:14px;">Marco</button>
+      <button onclick="selecionarContador('outro')" class="mcancel" style="font-size:14px;padding:12px;">Outro...</button>
     </div>
+    <div id="cnt-outro-wrap" style="display:none;margin-bottom:12px;">
+      <input class="minp" id="cnt-nome-inp" placeholder="Digite seu nome..." maxlength="40" autocomplete="off" style="margin-bottom:10px;">
+      <div class="mbtns">
+        <button class="mcancel" onclick="document.getElementById('cnt-outro-wrap').style.display='none';document.getElementById('cnt-opcoes').style.display='flex'">&#8592; Voltar</button>
+        <button class="mok" onclick="confirmarContador()">Confirmar</button>
+      </div>
+    </div>
+    <button class="mcancel" onclick="closeModal('m-contador')" style="width:100%;margin-top:4px;">Cancelar</button>
   </div>
 </div>
 
@@ -413,9 +421,12 @@ document.addEventListener('change',function(e){
     var campo=t.dataset.campo;
     if(campo==='est'){
       var d=gi(cat,nome);
+      var mn=parseFloat(d.min);
+      var es=parseFloat(t.value);
+      var buyQty=(!isNaN(mn)&&!isNaN(es)&&es<mn)?(mn-es):0;
       var maxVal=parseFloat(d.max);
-      if(!isNaN(maxVal)&&maxVal>0&&parseFloat(t.value)>maxVal){
-        if(!confirm('A quantidade '+t.value+' é maior que o máximo ('+maxVal+'). Está correto?')){
+      if(!isNaN(maxVal)&&maxVal>0&&buyQty>maxVal){
+        if(!confirm('O pedido de compra seria '+buyQty+' unidades, maior que o máximo configurado ('+maxVal+'). Está correto?')){
           t.value=d.est||'';
           return;
         }
@@ -542,14 +553,25 @@ function renderItems(){
 }
 
 function renderPedido(){
-  var all=calcAll();
+  var allRaw=calcAll();
+  var el=document.getElementById('ped-body');
+  if(allRaw.length===0){
+    document.getElementById('ped-bdg').textContent='0';
+    el.innerHTML='<div class="empty"><div class="ei">&#9881;</div>'
+      +'<p class="et" style="color:#888;font-size:16px">Configure os Limites</p>'
+      +'<p class="ed">Acesse Configurar Limites para definir os estoques mínimos.</p></div>';
+    return;
+  }
+  var completeCats=new Set(KEYS.filter(function(k){
+    return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+  }));
+  var all=allRaw.filter(function(i){return completeCats.has(i.cat);});
   var need=all.filter(function(i){return i.buy>0;});
   document.getElementById('ped-bdg').textContent=need.length;
-  var el=document.getElementById('ped-body');
   if(all.length===0){
-    el.innerHTML='<div class="empty"><div class="ei">&#9881;</div>'
-      +'<p class="et" style="color:#888;font-size:16px">Configure os minimos</p>'
-      +'<p class="ed">Acesse Configurar Minimos para definir os estoques minimos.</p></div>';
+    el.innerHTML='<div class="empty"><div class="ei">&#128203;</div>'
+      +'<p class="et" style="color:#888;font-size:16px">Nenhum levantamento completo</p>'
+      +'<p class="ed">Categorias com itens não contados não aparecem aqui. Complete a contagem de cada categoria.</p></div>';
     return;
   }
   var byCat={};
@@ -850,9 +872,7 @@ function buildPdfHtml(cats,pdfData){
         +'<td style="padding:5px 7px;border:1px solid #ddd;background:'+bg+'">'+item.nome+'</td>'
         +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+item.und+'</td>'
         +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+(item.es===''?'-':item.es)+'</td>'
-        +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;background:'+bg+'">'+item.mn+'</td>'
         +'<td style="padding:5px 7px;border:1px solid #ddd;text-align:center;font-weight:bold;color:'+(low?'#cc0000':'#16a34a')+';background:'+bg+'">'+(low?String(item.buy):'OK')+'</td>'
-        +'<td style="padding:5px 7px;border:1px solid #ddd;background:'+bg+'"></td>'
         +'</tr>';
     });
     var logo='<div>'
@@ -873,12 +893,10 @@ function buildPdfHtml(cats,pdfData){
       +'</div>'
       +'<table style="width:100%;border-collapse:collapse;font-size:11px;">'
       +'<tr style="background:#e0e0e0;">'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:left;width:36%;">PRODUTO</th>'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:8%;">UNID.</th>'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:10%;">ESTOQUE</th>'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:8%;">MIN.</th>'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:10%;">COMPRAR</th>'
-      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:left;width:28%;">OBSERVACAO</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:left;width:52%;">PRODUTO</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:12%;">UNID.</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:18%;">ESTOQUE</th>'
+      +'<th style="padding:5px 7px;border:1px solid #bbb;text-align:center;width:18%;">COMPRAR</th>'
       +'</tr>'+rows
       +'</table>'
       +'<p style="font-size:8px;color:#bbb;text-align:right;margin-top:5px;">'+cat+' — '+pdfData.dataStr+'</p>'
@@ -1091,20 +1109,30 @@ save = function(){
 
 function iniciarContagem(){
   document.getElementById('cnt-nome-inp').value='';
+  document.getElementById('cnt-opcoes').style.display='flex';
+  document.getElementById('cnt-outro-wrap').style.display='none';
   openModal('m-contador');
-  setTimeout(function(){document.getElementById('cnt-nome-inp').focus();},150);
+}
+function selecionarContador(nome){
+  if(nome==='outro'){
+    document.getElementById('cnt-opcoes').style.display='none';
+    document.getElementById('cnt-outro-wrap').style.display='block';
+    setTimeout(function(){document.getElementById('cnt-nome-inp').focus();},150);
+    return;
+  }
+  _contadorNome=nome;
+  _entrarContagem();
 }
 function confirmarContador(){
   _contadorNome=document.getElementById('cnt-nome-inp').value.trim()||'Anônimo';
-  if(!DB.levantamentoData){
-    DB.levantamentoData=new Date().toLocaleDateString('pt-BR');
-    save();
-  }
+  document.getElementById('cnt-opcoes').style.display='flex';
+  document.getElementById('cnt-outro-wrap').style.display='none';
+  _entrarContagem();
+}
+function _entrarContagem(){
+  if(!DB.levantamentoData){DB.levantamentoData=new Date().toLocaleDateString('pt-BR');save();}
   closeModal('m-contador');
-  SCREENS.forEach(function(id){
-    var el=document.getElementById('s-'+id);
-    if(el)el.classList.toggle('hidden',id!=='contagem');
-  });
+  SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='contagem');});
   document.getElementById('cnt-srch').value='';
   renderCntUI();
 }
