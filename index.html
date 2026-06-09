@@ -128,7 +128,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
   <div style="flex:1;padding:12px 0;">
     <button onclick="closeDrawer();go('config')" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
-      <span style="font-size:20px">&#9881;&#65039;</span><span>Configurar Mínimos</span>
+      <span style="font-size:20px">&#9881;&#65039;</span><span>Configurar Limites</span>
     </button>
     <button onclick="closeDrawer();go('historico')" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;color:#f5e6d3;padding:14px 20px;font-size:14px;font-weight:600;text-align:left;border-radius:0;">
       <span style="font-size:20px">&#128203;</span><span>Histórico</span>
@@ -163,8 +163,9 @@ button{cursor:pointer;font-family:inherit}
 <!-- CONTAGEM -->
 <div id="s-contagem" class="hidden">
   <div class="topbar" id="cnt-topbar">
-    <button class="back" onclick="go('home')">&#8592; Voltar</button>
+    <button class="back" onclick="voltarContagem()">&#8592; Voltar</button>
     <span class="top-ttl" id="cnt-ttl">-</span>
+    <button onclick="limparCategoria()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128465; Limpar</button>
     <span class="top-bdg" id="cnt-bdg">0/0</span>
   </div>
   <div class="tabs" id="cnt-tabs"></div>
@@ -181,6 +182,7 @@ button{cursor:pointer;font-family:inherit}
   <div class="topbar" style="border-color:#ef4444">
     <button class="back" onclick="go('home')">&#8592; Voltar</button>
     <span class="top-ttl">&#128722; Lista de Compras</span>
+    <button onclick="limparLista()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">Limpar Lista</button>
     <span class="top-bdg" id="ped-bdg" style="background:#ef4444">0</span>
   </div>
   <div id="ped-body"></div>
@@ -239,6 +241,31 @@ button{cursor:pointer;font-family:inherit}
       <button class="mok" onclick="saveSync()" id="sync-ok-btn">Conectar</button>
     </div>
     <button onclick="disconnectSync()" style="margin-top:10px;width:100%;background:none;border:1px solid #7f1d1d44;color:#ef4444;border-radius:10px;padding:10px;font-size:12px;font-weight:600;">Desconectar / Usar apenas local</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="moverlay hidden" id="m-confirm">
+  <div class="modal">
+    <div class="mtitle" id="mc-ttl"></div>
+    <div id="mc-sub" style="font-size:13px;color:#aaa;margin-bottom:20px;line-height:1.6;"></div>
+    <div class="mbtns">
+      <button class="mcancel" id="mc-no">Não</button>
+      <button class="mok" id="mc-yes">Sim</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VOLTAR CONTAGEM -->
+<div class="moverlay hidden" id="m-voltar">
+  <div class="modal">
+    <div class="mtitle" id="mv-ttl"></div>
+    <div id="mv-sub" style="font-size:13px;color:#aaa;margin-bottom:16px;line-height:1.6;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="mok" id="mv-btn1" style="background:#5c2d0e;"></button>
+      <button class="mok" id="mv-btn2" style="background:#22c55e;"></button>
+      <button class="mcancel" id="mv-btn3"></button>
+    </div>
   </div>
 </div>
 
@@ -335,6 +362,7 @@ var DB=load();
 if(!DB.est)DB.est={};
 if(!DB.hist)DB.hist=[];
 if(!DB.contadores)DB.contadores={};
+if(!DB.levantamentoData)DB.levantamentoData='';
 (function cleanOldHist(){
   var cutoff=Date.now()-(60*24*60*60*1000);
   var before=DB.hist.length;
@@ -344,7 +372,7 @@ if(!DB.contadores)DB.contadores={};
 
 function gi(cat,nome){
   if(DB.est[cat]&&DB.est[cat][nome]!=null)return DB.est[cat][nome];
-  return{min:'',est:''};
+  return{min:'',est:'',max:''};
 }
 function si(cat,nome,campo,val){
   if(!DB.est[cat])DB.est[cat]={};
@@ -383,8 +411,18 @@ document.addEventListener('change',function(e){
     var cat=decodeURIComponent(t.dataset.cat);
     var nome=decodeURIComponent(t.dataset.nome);
     var campo=t.dataset.campo;
+    if(campo==='est'){
+      var d=gi(cat,nome);
+      var maxVal=parseFloat(d.max);
+      if(!isNaN(maxVal)&&maxVal>0&&parseFloat(t.value)>maxVal){
+        if(!confirm('A quantidade '+t.value+' é maior que o máximo ('+maxVal+'). Está correto?')){
+          t.value=d.est||'';
+          return;
+        }
+      }
+    }
     si(cat,nome,campo,t.value);
-    if(campo==='min')renderCfg();
+    if(campo==='min'||campo==='max')renderCfg();
     else renderItems();
   }
 });
@@ -451,8 +489,15 @@ function renderCntUI(){
   var tabs='';
   KEYS.forEach(function(k){
     var enc=encodeURIComponent(k);
+    var allFilled=CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+    var anyFilled=CATS[k].itens.some(function(i){return gi(k,i.n).est!=='';});
+    var tabBg,tabColor,tabBorder='none';
+    if(k===CUR){tabBg=CATS[k].cor;tabColor='#fff';}
+    else if(allFilled){tabBg='#14532d';tabColor='#86efac';tabBorder='2px solid #22c55e';}
+    else if(anyFilled){tabBg='#450a0a';tabColor='#fca5a5';tabBorder='2px solid #ef4444';}
+    else{tabBg='#3d1f08';tabColor='#aaa';}
     tabs+='<button class="tab" onclick="CUR=decodeURIComponent(\''+enc+'\');document.getElementById(\'cnt-srch\').value=\'\';renderCntUI()" '
-      +'style="background:'+(k===CUR?CATS[k].cor:'#3d1f08')+';color:'+(k===CUR?'#fff':'#aaa')+'">'+CATS[k].emoji+'</button>';
+      +'style="background:'+tabBg+';color:'+tabColor+';border:'+tabBorder+'">'+CATS[k].emoji+'</button>';
   });
   document.getElementById('cnt-tabs').innerHTML=tabs;
   renderItems();
@@ -614,22 +659,13 @@ function openSaveModal(){
   setTimeout(function(){document.getElementById('m-inp').select();},150);
 }
 function novaContagem(){
-  if(!confirm('Zerar toda a contagem atual?'))return;
-  document.getElementById('m-ttl').textContent='Nova Contagem';
-  document.getElementById('m-sub').textContent='Registre um nome antes de zerar';
-  document.getElementById('m-inp').value='Inventario '+new Date().toLocaleDateString('pt-BR');
-  document.getElementById('m-ok').textContent='Confirmar';
-  document.getElementById('m-ok').onclick=function(){
-    var nome=document.getElementById('m-inp').value.trim()||'Inventario sem nome';
-    closeModal('m-nome');
-    var need=calcNeed();
-    if(need.length>0)saveHist(nome);
-    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
-    DB.contadores={};
-    save();refreshHome();
-  };
-  openModal('m-nome');
-  setTimeout(function(){document.getElementById('m-inp').select();},150);
+  if(!confirm('Zerar toda a contagem atual? Esta ação não pode ser desfeita.'))return;
+  KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+  DB.contadores={};
+  DB.levantamentoData='';
+  save();
+  refreshHome();
+  go('home');
 }
 function saveHist(nome){
   var need=calcNeed();
@@ -708,7 +744,7 @@ function delHist(id){
 
 function renderCfgUI(){
   var c=CATS[CUR];
-  document.getElementById('cfg-ttl').textContent='Minimos: '+CUR;
+  document.getElementById('cfg-ttl').textContent='Limites: '+CUR;
   document.getElementById('cfg-topbar').style.borderColor=c.cor;
   var tabs='';
   KEYS.forEach(function(k){
@@ -728,12 +764,18 @@ function renderCfg(){
     var d=gi(CUR,item.n);
     var encCat=encodeURIComponent(CUR);
     var encNome=encodeURIComponent(item.n);
-    html+='<div class="icard" style="border-color:'+(d.min?c.cor:'#5c3010')+'">'
+    var hasLimits=!!(d.min||d.max);
+    html+='<div class="icard" style="border-color:'+(hasLimits?c.cor:'#5c3010')+'">'
       +'<div class="itop"><span class="iname">'+item.n+'</span><span class="iund">'+item.u+'</span></div>'
-      +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE MINIMO</label>'
-      +'<input class="inum" type="number" inputmode="decimal" placeholder="Definir minimo..." value="'+(d.min||'')+'"'
-      +' style="width:100%;border-color:'+(d.min?c.cor:'#5c3010')+'"'
-      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min">'
+      +'<div class="irow" style="grid-template-columns:1fr 1fr;">'
+      +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">MÍNIMO</label>'
+      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
+      +' style="border-color:'+(d.min?c.cor:'#5c3010')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
+      +'<div class="ig"><label class="ilbl" style="color:#f59e0b">MÁXIMO</label>'
+      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.max||'')+'"'
+      +' style="border-color:'+(d.max?'#f59e0b':'#5c3010')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="max"></div>'
       +'</div></div>';
   });
   document.getElementById('cfg-list').innerHTML=html;
@@ -752,8 +794,9 @@ function openPdfModal(histId){
     byCat={};
     all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
     var dt=new Date().toLocaleDateString('pt-BR');
-    document.getElementById('m-pdf-sub').textContent='Levantamento completo - '+dt;
-    pdfData={nome:'Levantamento',dataStr:dt,byCat:byCat,contadores:DB.contadores||{}};
+    var levData=DB.levantamentoData||dt;
+    document.getElementById('m-pdf-sub').textContent='Levantamento completo - '+levData;
+    pdfData={nome:'Levantamento',dataStr:levData,byCat:byCat,contadores:DB.contadores||{}};
   }
   var cats=Object.keys(byCat);
   pdfSel=new Set(cats);
@@ -812,10 +855,9 @@ function buildPdfHtml(cats,pdfData){
         +'<td style="padding:5px 7px;border:1px solid #ddd;background:'+bg+'"></td>'
         +'</tr>';
     });
-    var logo='<div style="display:flex;align-items:center;gap:8px;">'
-      +'<span style="font-size:26px;line-height:1;">&#127869;&#65039;</span>'
-      +'<div><div style="font-size:17px;font-weight:900;color:#7c3a1e;letter-spacing:-0.5px;line-height:1.1;">Coco Bambu</div>'
-      +'<div style="font-size:8px;color:#aaa;letter-spacing:2px;text-transform:uppercase;">Tucuruvi</div></div>'
+    var logo='<div>'
+      +'<div style="font-size:17px;font-weight:900;color:#7c3a1e;letter-spacing:-0.5px;line-height:1.1;">Coco Bambu</div>'
+      +'<div style="font-size:8px;color:#aaa;letter-spacing:2px;text-transform:uppercase;">Tucuruvi</div>'
       +'</div>';
     pages+='<div style="padding:14px 18px;page-break-after:always;font-family:Arial,sans-serif;color:#000;">'
       +'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr>'
@@ -1054,6 +1096,10 @@ function iniciarContagem(){
 }
 function confirmarContador(){
   _contadorNome=document.getElementById('cnt-nome-inp').value.trim()||'Anônimo';
+  if(!DB.levantamentoData){
+    DB.levantamentoData=new Date().toLocaleDateString('pt-BR');
+    save();
+  }
   closeModal('m-contador');
   SCREENS.forEach(function(id){
     var el=document.getElementById('s-'+id);
@@ -1064,19 +1110,79 @@ function confirmarContador(){
 }
 function askSaveBeforePdf(){
   var need=calcNeed();
+  var levData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
+  var nomeAuto='Levantamento '+levData;
   if(need.length===0){openPdfModal(null);return;}
-  document.getElementById('m-ttl').textContent='Salvar no Histórico?';
-  document.getElementById('m-sub').textContent='Deseja salvar este levantamento no histórico antes de gerar o PDF?';
-  document.getElementById('m-inp').value='Levantamento '+new Date().toLocaleDateString('pt-BR');
-  document.getElementById('m-ok').textContent='Salvar e gerar PDF';
-  document.getElementById('m-ok').onclick=function(){
-    var nome=document.getElementById('m-inp').value.trim()||'Levantamento sem nome';
-    closeModal('m-nome');
-    saveHist(nome);
-    openPdfModal(null);
-  };
-  openModal('m-nome');
-  setTimeout(function(){document.getElementById('m-inp').select();},150);
+  showConfirm(
+    'Salvar no Histórico?',
+    'Deseja salvar este levantamento no histórico?\n\n"'+nomeAuto+'"',
+    function(){saveHist(nomeAuto);openPdfModal(null);},
+    null
+  );
+}
+
+function showConfirm(ttl,msg,onYes,onNo){
+  document.getElementById('mc-ttl').textContent=ttl;
+  document.getElementById('mc-sub').innerHTML=msg.replace(/\n/g,'<br>');
+  document.getElementById('mc-yes').onclick=function(){closeModal('m-confirm');if(onYes)onYes();};
+  document.getElementById('mc-no').onclick=function(){closeModal('m-confirm');if(onNo)onNo();};
+  openModal('m-confirm');
+}
+
+function voltarContagem(){
+  var incomplete=KEYS.filter(function(k){
+    return CATS[k].itens.some(function(i){return gi(k,i.n).est==='';});
+  });
+  function askLista(){
+    showConfirm(
+      'Enviar para Lista de Compras?',
+      'Deseja ir para a Lista de Compras agora?',
+      function(){go('pedido');},
+      function(){
+        _contadorNome='';
+        SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='home');});
+        refreshHome();
+      }
+    );
+  }
+  if(incomplete.length>0){
+    var nomes=incomplete.map(function(k){return CATS[k].emoji+' '+k;}).join('\n');
+    showConfirm(
+      '⚠️ Categorias incompletas',
+      'As seguintes categorias ainda não foram totalmente preenchidas:\n'+nomes+'\n\nDeseja voltar para preenchê-las?',
+      function(){CUR=incomplete[0];renderCntUI();},
+      function(){askLista();}
+    );
+  }else{
+    askLista();
+  }
+}
+
+function limparCategoria(){
+  showConfirm(
+    'Limpar '+CATS[CUR].emoji+' '+CUR+'?',
+    'Isso irá zerar as quantidades contadas nesta categoria.',
+    function(){
+      CATS[CUR].itens.forEach(function(i){if(DB.est[CUR]&&DB.est[CUR][i.n])DB.est[CUR][i.n].est='';});
+      if(DB.contadores)delete DB.contadores[CUR];
+      save();renderItems();renderCntUI();
+    },
+    null
+  );
+}
+
+function limparLista(){
+  showConfirm(
+    'Limpar Lista?',
+    'Isso irá zerar todas as quantidades de estoque contadas.',
+    function(){
+      KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+      DB.contadores={};
+      DB.levantamentoData='';
+      save();renderPedido();
+    },
+    null
+  );
 }
 
 function openDrawer(){
