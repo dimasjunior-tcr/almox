@@ -311,7 +311,7 @@ button{cursor:pointer;font-family:inherit}
     <button class="sel-all" onclick="pdfToggleAll()">Selecionar / Desmarcar tudo</button>
     <div class="pdf-grid" id="pdf-grid"></div>
     <div class="mbtns">
-      <button class="mcancel" onclick="closeModal('m-pdf')">Cancelar</button>
+      <button class="mcancel" onclick="_clearListaAfterPdf=false;closeModal('m-pdf')">Cancelar</button>
       <button class="mok" style="background:#d97706" onclick="doPDF()">Gerar PDF</button>
     </div>
   </div>
@@ -363,6 +363,7 @@ var FLT = 'todos';
 var pdfData = null;
 var pdfSel = new Set();
 var _contadorNome = '';
+var _clearListaAfterPdf = false;
 
 function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
 function save(){try{localStorage.setItem('estoq4',JSON.stringify(DB));}catch(e){alert('Erro ao salvar: '+e.message);}}
@@ -942,6 +943,13 @@ function doPDF(){
   var win=window.open(url,'_blank');
   if(!win||win.closed){var a=document.createElement('a');a.href=url;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
   setTimeout(function(){URL.revokeObjectURL(url);},60000);
+  if(_clearListaAfterPdf){
+    _clearListaAfterPdf=false;
+    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+    DB.contadores={};DB.levantamentoData='';
+    save();
+    if(!document.getElementById('s-pedido').classList.contains('hidden'))renderPedido();
+  }
 }
 
 // ===== SYNC =====
@@ -1119,11 +1127,11 @@ function askSaveBeforePdf(){
   var need=calcNeed();
   var levData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
   var nomeAuto='Levantamento '+levData;
-  if(need.length===0){openPdfModal(null);return;}
+  if(need.length===0){_clearListaAfterPdf=true;openPdfModal(null);return;}
   showConfirm(
     'Salvar no Histórico?',
     'Deseja salvar este levantamento no histórico?\n\n"'+nomeAuto+'"',
-    function(){saveHist(nomeAuto);openPdfModal(null);},
+    function(){saveHist(nomeAuto);_clearListaAfterPdf=true;openPdfModal(null);},
     null
   );
 }
