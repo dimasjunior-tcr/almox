@@ -550,7 +550,7 @@ function refreshHome(){
   KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){total++;if(gi(k,i.n).est!=='')counted++;});});
   document.getElementById('hdr-sub').textContent=counted+' / '+total+' itens contados';
   document.getElementById('prog-fill').style.width=(total>0?(counted/total*100).toFixed(1):0)+'%';
-  var need=calcNeed();
+  var need=calcAllSent().filter(function(i){return i.buy>0;});
   document.getElementById('pedido-desc').textContent=need.length+' itens para repor';
   var bdg=document.getElementById('bdg');
   if(need.length>0){bdg.textContent=need.length;bdg.classList.remove('hidden');}
