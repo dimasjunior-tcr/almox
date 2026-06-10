@@ -520,9 +520,13 @@ function enviarLevantamento(){
     DB.sentEst[k]={};
     CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
     if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
+    // zera contagem da categoria enviada
+    CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});
+    if(DB.contadores)delete DB.contadores[k];
   });
   if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
   save();
+  renderCntUI();
   showToast('Levantamento enviado com sucesso!');
 }
 
