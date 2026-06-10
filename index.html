@@ -492,35 +492,26 @@ function showToast(msg,color){
   setTimeout(function(){t.style.transition='opacity 0.5s';t.style.opacity='0';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},500);},2500);
 }
 function enviarLevantamento(){
-  var completeCats=KEYS.filter(function(k){
-    return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+  var catsToSend=KEYS.filter(function(k){
+    return CATS[k].itens.some(function(i){return gi(k,i.n).est!=='';});
   });
-  if(completeCats.length===0){showToast('Nenhuma categoria completa para enviar.','#ef4444');return;}
-  var newCats=[],changedCats=[];
-  completeCats.forEach(function(k){
-    if(!DB.sentEst[k]){newCats.push(k);}
-    else{
-      var changed=CATS[k].itens.some(function(i){return String(gi(k,i.n).est)!==String(DB.sentEst[k][i.n]===undefined?'':DB.sentEst[k][i.n]);});
-      if(changed)changedCats.push(k);
-    }
-  });
-  if(newCats.length===0&&changedCats.length===0){showToast('Levantamento já atualizado. Sem modificações.','#d97706');return;}
-  var linhas=[];
-  if(newCats.length>0)linhas.push('Novas: '+newCats.map(function(k){return CATS[k].emoji+' '+k;}).join(', '));
-  if(changedCats.length>0)linhas.push('Modificadas: '+changedCats.map(function(k){return CATS[k].emoji+' '+k;}).join(', '));
-  var titulo=changedCats.length>0?'Atualizar Levantamentos?':'Enviar para Levantamentos?';
-  showConfirm(titulo,linhas.join('\n'),function(){
-    var toSend=newCats.concat(changedCats);
-    if(!DB.sentEst)DB.sentEst={};
-    toSend.forEach(function(k){
-      DB.sentEst[k]={};
-      CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
-      if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
+  if(catsToSend.length===0){showToast('Nenhuma contagem para enviar.','#ef4444');return;}
+  var hasChanges=catsToSend.some(function(k){
+    if(!DB.sentEst||!DB.sentEst[k])return true;
+    return CATS[k].itens.some(function(i){
+      return String(gi(k,i.n).est)!==String(DB.sentEst[k][i.n]===undefined?'':DB.sentEst[k][i.n]);
     });
-    if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
-    save();
-    showToast('Levantamento enviado para Levantamentos!');
-  },null);
+  });
+  if(!hasChanges){showToast('Levantamento já atualizado. Sem modificações.','#d97706');return;}
+  if(!DB.sentEst)DB.sentEst={};
+  catsToSend.forEach(function(k){
+    DB.sentEst[k]={};
+    CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
+    if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
+  });
+  if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
+  save();
+  showToast('Levantamento enviado com sucesso!');
 }
 
 var SCREENS=['home','contagem','pedido','historico','config'];
