@@ -494,7 +494,22 @@ function enviarLevantamento(){
   var catsToSend=KEYS.filter(function(k){
     return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
   });
-  if(catsToSend.length===0){showToast('Nenhuma contagem para enviar.','#ef4444');return;}
+  var incomplete=KEYS.filter(function(k){
+    return CATS[k].itens.length>0&&CATS[k].itens.some(function(i){return gi(k,i.n).est==='';})
+      &&CATS[k].itens.some(function(i){return gi(k,i.n).est!=='';});
+  });
+  if(catsToSend.length===0){
+    var noneMsg='Nenhuma categoria completa para enviar.';
+    if(incomplete.length>0)noneMsg+='\n\nIncompletas: '+incomplete.map(function(k){return CATS[k].emoji+' '+k;}).join(', ');
+    alert(noneMsg);return;
+  }
+  if(incomplete.length>0){
+    var incNames=incomplete.map(function(k){
+      var falta=CATS[k].itens.filter(function(i){return gi(k,i.n).est==='';}).length;
+      return CATS[k].emoji+' '+k+' (faltam '+falta+')';
+    }).join('\n');
+    if(!confirm('As categorias abaixo estão incompletas e não serão enviadas:\n\n'+incNames+'\n\nDeseja enviar mesmo assim as categorias completas?'))return;
+  }
   var hasChanges=catsToSend.some(function(k){
     if(!DB.sentEst||!DB.sentEst[k])return true;
     return CATS[k].itens.some(function(i){
