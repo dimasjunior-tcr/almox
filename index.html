@@ -494,20 +494,12 @@ function enviarLevantamento(){
   var catsToSend=KEYS.filter(function(k){
     return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
   });
-  var incomplete=KEYS.filter(function(k){
-    return CATS[k].itens.length>0&&CATS[k].itens.some(function(i){return gi(k,i.n).est==='';});
-  });
-  if(catsToSend.length===0){
-    var msg='Nenhuma categoria completa para enviar.';
-    if(incomplete.length>0){
-      msg+='\n\nCategorias incompletas:\n'+incomplete.map(function(k){
-        var total=CATS[k].itens.length;
-        var falta=CATS[k].itens.filter(function(i){return gi(k,i.n).est==='';}).length;
-        return CATS[k].emoji+' '+k+': faltam '+falta+' de '+total+' itens';
-      }).join('\n');
-    }
-    alert(msg);return;
+  var curMissing=CATS[CUR].itens.filter(function(i){return gi(CUR,i.n).est==='';});
+  if(curMissing.length>0){
+    alert(CATS[CUR].emoji+' '+CUR+': faltam '+curMissing.length+' item(s):\n\n'+curMissing.map(function(i){return '• '+i.n;}).join('\n'));
+    return;
   }
+  if(catsToSend.length===0){showToast('Nenhuma categoria completa para enviar.','#ef4444');return;}
   var hasChanges=catsToSend.some(function(k){
     if(!DB.sentEst||!DB.sentEst[k])return true;
     return CATS[k].itens.some(function(i){
@@ -607,11 +599,12 @@ function renderItems(){
     var mn=parseFloat(d.min),es=parseFloat(d.est);
     var low=!isNaN(mn)&&!isNaN(es)&&es<mn;
     var ok=d.est!=='';
-    var bord=low?'#ef4444':ok?'#22c55e':'#5c3010';
+    var bord=low?'#ef4444':ok?'#22c55e':'#b45309';
+    var cardBg=ok?'':'background:#2d1200;';
     var compTxt=(!isNaN(mn)&&!isNaN(es))?(low?(mn-es).toFixed(1).replace(/\.0$/,''):'0'):'--';
     var encCat=encodeURIComponent(CUR);
     var encNome=encodeURIComponent(item.n);
-    html+='<div class="icard" style="border-color:'+bord+'">'
+    html+='<div class="icard" style="border-color:'+bord+';'+cardBg+'">'
       +'<div class="itop"><span class="iname">'+item.n+'</span><span class="iund">'+item.u+'</span></div>'
       +'<div class="irow">'
       +'<div class="ig"><label class="ilbl">MINIMO</label>'
