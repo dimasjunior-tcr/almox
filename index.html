@@ -1276,9 +1276,55 @@ function showConfirm(ttl,msg,onYes,onNo){
 }
 
 function voltarContagem(){
-  _contadorNome='';
-  SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='home');});
-  refreshHome();
+  var complete=KEYS.filter(function(k){
+    return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+  });
+  var incomplete=KEYS.filter(function(k){
+    return CATS[k].itens.length>0
+      &&CATS[k].itens.some(function(i){return gi(k,i.n).est!=='';})
+      &&CATS[k].itens.some(function(i){return gi(k,i.n).est==='';});
+  });
+  if(complete.length===0&&incomplete.length===0){
+    _contadorNome='';
+    SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='home');});
+    refreshHome();return;
+  }
+  var msg='';
+  if(complete.length>0)msg+='Categorias prontas para enviar:\n'+complete.map(function(k){return CATS[k].emoji+' '+k;}).join('\n');
+  if(incomplete.length>0){
+    if(msg)msg+='\n\n';
+    msg+='Categorias incompletas (não serão enviadas):\n'+incomplete.map(function(k){
+      var falta=CATS[k].itens.filter(function(i){return gi(k,i.n).est==='';}).length;
+      var total=CATS[k].itens.length;
+      return CATS[k].emoji+' '+k+': faltam '+falta+' de '+total+' itens';
+    }).join('\n');
+  }
+  showConfirm(
+    complete.length>0?'Enviar antes de sair?':'Categorias incompletas',
+    msg,
+    function(){
+      if(complete.length>0){
+        if(!DB.sentEst)DB.sentEst={};
+        complete.forEach(function(k){
+          DB.sentEst[k]={};
+          CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
+          if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
+          CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});
+          if(DB.contadores)delete DB.contadores[k];
+        });
+        if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
+        save();
+      }
+      _contadorNome='';
+      SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='home');});
+      refreshHome();
+    },
+    function(){
+      _contadorNome='';
+      SCREENS.forEach(function(id){var el=document.getElementById('s-'+id);if(el)el.classList.toggle('hidden',id!=='home');});
+      refreshHome();
+    }
+  );
 }
 
 function limparCategoria(){
