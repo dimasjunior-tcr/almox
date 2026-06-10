@@ -494,7 +494,20 @@ function enviarLevantamento(){
   var catsToSend=KEYS.filter(function(k){
     return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
   });
-  if(catsToSend.length===0){showToast('Nenhuma categoria completa para enviar.','#ef4444');return;}
+  var incomplete=KEYS.filter(function(k){
+    return CATS[k].itens.length>0&&CATS[k].itens.some(function(i){return gi(k,i.n).est==='';});
+  });
+  if(catsToSend.length===0){
+    var msg='Nenhuma categoria completa para enviar.';
+    if(incomplete.length>0){
+      msg+='\n\nCategorias incompletas:\n'+incomplete.map(function(k){
+        var total=CATS[k].itens.length;
+        var falta=CATS[k].itens.filter(function(i){return gi(k,i.n).est==='';}).length;
+        return CATS[k].emoji+' '+k+': faltam '+falta+' de '+total+' itens';
+      }).join('\n');
+    }
+    alert(msg);return;
+  }
   var hasChanges=catsToSend.some(function(k){
     if(!DB.sentEst||!DB.sentEst[k])return true;
     return CATS[k].itens.some(function(i){
