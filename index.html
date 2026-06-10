@@ -550,13 +550,17 @@ function refreshHome(){
   var html='';
   KEYS.forEach(function(k){
     var c=CATS[k];
+    var sent=DB.sentEst&&DB.sentEst[k];
     var ct=c.itens.filter(function(i){return gi(k,i.n).est!=='';}).length;
-    var pct=(ct/c.itens.length*100).toFixed(1);
+    var pct=sent?100:(ct/c.itens.length*100).toFixed(1);
+    var countLabel=sent?'<span style="color:#22c55e;font-weight:800;font-size:13px;">✓ OK</span>'
+      :'<span class="cr-count" style="color:'+c.cor+'">'+ct+'/'+c.itens.length+'</span>';
+    var barColor=sent?'#22c55e':c.cor;
     html+='<button class="cat-row" onclick="CUR=decodeURIComponent(\'' +encodeURIComponent(k)+ '\');go(\'contagem\')">'
       +'<span class="cr-emoji">'+c.emoji+'</span>'
       +'<div class="cr-info"><span class="cr-name">'+k+'</span>'
-      +'<div class="cr-bar"><div class="cr-fill" style="width:'+pct+'%;background:'+c.cor+'"></div></div></div>'
-      +'<span class="cr-count" style="color:'+c.cor+'">'+ct+'/'+c.itens.length+'</span></button>';
+      +'<div class="cr-bar"><div class="cr-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div></div>'
+      +countLabel+'</button>';
   });
   document.getElementById('cat-rows').innerHTML=html;
 }
