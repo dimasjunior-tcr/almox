@@ -763,10 +763,11 @@ function novaContagem(){
   save();refreshHome();go('home');
 }
 function saveHist(nome){
-  var need=calcAllSent().filter(function(i){return i.buy>0;});
-  if(need.length===0){return;}
+  var all=calcAllSent();
+  var need=all.filter(function(i){return i.buy>0;});
+  if(all.length===0){return;}
   var byCat={};
-  need.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
   var levData=DB.sentLevData||DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
   var contadores=Object.assign({},DB.sentContadores||{},DB.contadores||{});
   DB.hist.unshift({id:Date.now(),nome:nome,data:new Date().toISOString(),
@@ -824,9 +825,28 @@ function renderHist(){
     var cont=h.contadores||{};
     Object.keys(cont).forEach(function(k){var n=cont[k];if(n&&namesArr.indexOf(n)<0)namesArr.push(n);});
     var names=namesArr.join(', ');
-    var dets='<div style="padding:8px 0 4px;font-size:11px;color:#888;">Categorias incluídas:</div>';
+    var dets='';
     Object.keys(h.byCat).forEach(function(cat){
-      dets+='<div class="hctitle" style="margin:4px 0;">'+(CATS[cat]?CATS[cat].emoji:'')+' '+cat+'</div>';
+      var items=h.byCat[cat];
+      var buyItems=items.filter(function(i){return i.buy>0;});
+      var okItems=items.filter(function(i){return i.buy===0;});
+      dets+='<div class="hctitle" style="margin:8px 0 4px;">'+(CATS[cat]?CATS[cat].emoji:'')+' '+cat+'</div>';
+      if(buyItems.length>0){
+        buyItems.forEach(function(i){
+          dets+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 8px;border-radius:4px;background:#3d1505;margin:2px 0;">'
+            +'<span style="font-size:12px;color:#f5e6d3;">'+i.nome+'</span>'
+            +'<span style="font-size:12px;font-weight:700;color:#ef4444;">+'+i.buy+' '+i.und+'</span>'
+            +'</div>';
+        });
+      }
+      if(okItems.length>0){
+        okItems.forEach(function(i){
+          dets+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 8px;border-radius:4px;background:#0d2010;margin:2px 0;">'
+            +'<span style="font-size:12px;color:#6b7280;">'+i.nome+'</span>'
+            +'<span style="font-size:12px;font-weight:700;color:#22c55e;">✓ OK</span>'
+            +'</div>';
+        });
+      }
     });
     html+='<div class="hcard" style="background:'+WBG[wi]+';border-color:'+WBORDER[wi]+'">'
       +'<div class="hcardh" style="border-bottom-color:'+WBORDER[wi]+'44"><div>'
