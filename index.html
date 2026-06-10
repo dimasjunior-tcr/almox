@@ -154,7 +154,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
   <div class="grid">
     <button class="card c-blue" onclick="go('contagem')"><span class="ci">&#128230;</span><span class="cl">Fazer Contagem</span><span class="cd">Registrar estoque</span></button>
-    <button class="card c-red" onclick="go('pedido')"><span class="ci">&#128722;</span><span class="cl">Lista de Compras</span><span class="cd" id="pedido-desc">0 itens para repor</span><span class="badge hidden" id="bdg">0</span></button>
+    <button class="card c-red" onclick="go('pedido')"><span class="ci">&#128722;</span><span class="cl">Levantamentos</span><span class="cd" id="pedido-desc">0 itens para repor</span><span class="badge hidden" id="bdg">0</span></button>
   </div>
   <p class="sec-title">Progresso por categoria</p>
   <div style="padding:0 16px" id="cat-rows"></div>
@@ -181,9 +181,13 @@ button{cursor:pointer;font-family:inherit}
 <div id="s-pedido" class="hidden">
   <div class="topbar" style="border-color:#ef4444">
     <button class="back" onclick="go('home')">&#8592; Voltar</button>
-    <span class="top-ttl">&#128722; Lista de Compras</span>
-    <button onclick="limparLista()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">Limpar Lista</button>
+    <span class="top-ttl">&#128722; Levantamentos</span>
+    <button onclick="limparLista()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">Limpar</button>
     <span class="top-bdg" id="ped-bdg" style="background:#ef4444">0</span>
+  </div>
+  <div class="abtns" style="padding:12px 14px 4px">
+    <button class="abtn" style="background:#22c55e" onclick="copyList()">&#128203; Copiar Lista Completa</button>
+    <button class="abtn" style="background:#d97706" onclick="askSaveBeforePdf()">&#128196; Exportar</button>
   </div>
   <div id="ped-body"></div>
 </div>
@@ -426,7 +430,10 @@ document.addEventListener('change',function(e){
       var es=parseFloat(t.value);
       var buyQty=(!isNaN(mn)&&!isNaN(es)&&es<mn)?(mn-es):0;
       var maxVal=parseFloat(d.max);
-      if(!isNaN(maxVal)&&maxVal>0&&buyQty>maxVal){
+      if(!isNaN(maxVal)&&maxVal>0&&!isNaN(es)&&es>maxVal){
+        alert('Atenção: o estoque digitado ('+es+') está acima do máximo configurado ('+maxVal+') para "'+nome+'".');
+        sendMaxAlert(cat,nome,es,maxVal);
+      } else if(!isNaN(maxVal)&&maxVal>0&&buyQty>maxVal){
         if(!confirm('O pedido de compra seria '+buyQty+' unidades, maior que o máximo configurado ('+maxVal+'). Está correto?')){
           t.value=d.est||'';
           return;
@@ -577,10 +584,7 @@ function renderPedido(){
   }
   var byCat={};
   all.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
-  var html='<div class="abtns">'
-    +'<button class="abtn" style="background:#22c55e" onclick="copyList()">&#128203; Copiar Lista Completa</button>'
-    +'<button class="abtn" style="background:#d97706" onclick="askSaveBeforePdf()">&#128196; Exportar PDF por Categoria</button>'
-    +'</div>';
+  var html='';
   Object.entries(byCat).forEach(function(entry){
     var cat=entry[0],items=entry[1];
     var c=CATS[cat];
@@ -781,7 +785,22 @@ function togHist(btn){
   btn.querySelector('span:last-child').textContent=open?'v':'^';
   btn.querySelector('span:first-child').textContent=open?'Ver detalhes':'Ocultar';
 }
+var EMAILJS_PUBLIC_KEY='';
+var EMAILJS_SERVICE_ID='';
+var EMAILJS_TEMPLATE_ID='';
+function sendMaxAlert(cat,nome,est,max){
+  if(!EMAILJS_PUBLIC_KEY)return;
+  fetch('https://api.emailjs.com/api/v1.0/email/send',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({service_id:EMAILJS_SERVICE_ID,template_id:EMAILJS_TEMPLATE_ID,user_id:EMAILJS_PUBLIC_KEY,
+      template_params:{to_email:'Dimas.junior@cocobambu.com',categoria:cat,item:nome,estoque:String(est),maximo:String(max),
+        data:new Date().toLocaleString('pt-BR')}})
+  }).catch(function(){});
+}
 function delHist(id){
+  var pwd=prompt('Digite a senha para excluir:');
+  if(pwd===null)return;
+  if(pwd!=='090626'){alert('Senha incorreta.');return;}
   if(!confirm('Remover este registro?'))return;
   DB.hist=DB.hist.filter(function(h){return h.id!==id;});
   save();renderHist();
@@ -1213,12 +1232,12 @@ function voltarContagem(){
   var incomplete=KEYS.filter(function(k){
     return CATS[k].itens.some(function(i){return gi(k,i.n).est==='';});
   });
-  var msg='Deseja enviar este levantamento para a Lista de Compras?';
+  var msg='Deseja enviar este levantamento para a Levantamentos?';
   if(incomplete.length>0){
     var nomes=incomplete.map(function(k){return CATS[k].emoji+' '+k;}).join('\n');
     msg='As seguintes categorias ainda não estão completas e não aparecerão na lista:\n'+nomes+'\n\nDeseja enviar mesmo assim?';
   }
-  showConfirm('Enviar para Lista de Compras?',msg,
+  showConfirm('Enviar para Levantamentos?',msg,
     function(){go('pedido');},
     function(){
       _contadorNome='';
