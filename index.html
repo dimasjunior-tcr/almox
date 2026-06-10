@@ -167,16 +167,15 @@ button{cursor:pointer;font-family:inherit}
     <span class="top-ttl" id="cnt-ttl">-</span>
     <button onclick="limparCategoria()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128465; Limpar</button>
     <span class="top-bdg" id="cnt-bdg">0/0</span>
+    <button onclick="enviarLevantamento()" style="background:#2563eb;border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128228; Enviar</button>
   </div>
   <div class="tabs" id="cnt-tabs"></div>
   <div class="srch-wrap"><input class="srch" id="cnt-srch" placeholder="Buscar item..." oninput="renderItems()"></div>
   <div class="ilist" id="ilist"></div>
   <div class="navarr">
     <button class="narr" id="btn-prev" onclick="navCat(-1)">&#8592; Anterior</button>
+    <button class="narr" onclick="document.getElementById('s-contagem').scrollTop=0;window.scrollTo(0,0);" style="background:#3d1f08;color:#f5e6d3;">&#8593; Ir para cima</button>
     <button class="narr" id="btn-next" onclick="navCat(1)">Proxima &#8594;</button>
-  </div>
-  <div style="padding:10px 14px 16px">
-    <button onclick="enviarLevantamento()" style="display:block;width:100%;border:none;color:#fff;border-radius:12px;padding:14px;font-size:15px;font-weight:700;text-align:center;background:#2563eb;cursor:pointer;">&#128228; Enviar Levantamento</button>
   </div>
 </div>
 
