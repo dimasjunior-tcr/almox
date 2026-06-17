@@ -401,10 +401,12 @@ if(!DB.extractDates)DB.extractDates={};
 function gi(cat,nome){
   var d=DB.est[cat]&&DB.est[cat][nome]!=null?DB.est[cat][nome]:{min:'',est:'',max:''};
   var def=CATS[cat]&&CATS[cat].itens.find(function(i){return i.n===nome;});
+  var hasMin=d.min!==''&&d.min!==null&&d.min!==undefined;
+  var hasMax=d.max!==''&&d.max!==null&&d.max!==undefined;
   return{
-    min:d.min!==''?d.min:(def&&def.dmin!==undefined?String(def.dmin):''),
-    est:d.est!==undefined?d.est:'',
-    max:d.max!==''?d.max:(def&&def.dmax!==undefined?String(def.dmax):''),
+    min:hasMin?String(d.min):(def&&def.dmin!==undefined?String(def.dmin):''),
+    est:d.est!==undefined&&d.est!==null?d.est:'',
+    max:hasMax?String(d.max):(def&&def.dmax!==undefined?String(def.dmax):''),
     buy:d.buy!==undefined?d.buy:''
   };
 }
