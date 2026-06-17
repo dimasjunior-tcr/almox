@@ -407,7 +407,8 @@ function gi(cat,nome){
   return{
     min:d.min!==''?d.min:(def&&def.dmin!==undefined?String(def.dmin):''),
     est:d.est!==undefined?d.est:'',
-    max:d.max!==''?d.max:(def&&def.dmax!==undefined?String(def.dmax):'')
+    max:d.max!==''?d.max:(def&&def.dmax!==undefined?String(def.dmax):''),
+    buy:d.buy!==undefined?d.buy:''
   };
 }
 function si(cat,nome,campo,val){
@@ -465,7 +466,7 @@ document.addEventListener('change',function(e){
     }
     si(cat,nome,campo,t.value);
     if(campo==='min'||campo==='max')renderCfg();
-    else{if(campo==='est')_highlightMissing=false;renderItems();}
+    else{if(campo==='est')_highlightMissing=false;if(campo==='buy'){if(!DB.est[cat])DB.est[cat]={};if(!DB.est[cat][nome])DB.est[cat][nome]={min:'',est:'',max:''};DB.est[cat][nome].buy=t.value;save();}renderItems();}
   }
 });
 
@@ -495,7 +496,8 @@ function calcAllSent(){
       var sentVal=DB.sentEst[k][item.n];
       if(sentVal===undefined||sentVal==='')return;
       var es=parseFloat(sentVal);
-      var buy=(!isNaN(es)&&es<mn)?+(mn-es).toFixed(2):0;
+      var customBuy=DB.est[k]&&DB.est[k][item.n]&&DB.est[k][item.n].buy!==undefined&&DB.est[k][item.n].buy!==''?parseFloat(DB.est[k][item.n].buy):undefined;
+      var buy=customBuy!==undefined&&!isNaN(customBuy)?customBuy:(!isNaN(es)&&es<mn)?+(mn-es).toFixed(2):0;
       out.push({cat:k,nome:item.n,und:item.u,mn:mn,es:isNaN(es)?'':es,buy:buy});
     });
   });
@@ -657,7 +659,10 @@ function renderItems(){
       +' style="border-color:'+(ok?c.cor:'#5c3010')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est"></div>'
       +'<div class="ig"><label class="ilbl">COMPRAR</label>'
-      +'<div class="icomp'+(low?' low':'')+'">'+compTxt+'</div></div>'
+      +(CUR==='CARNES'
+        ?'<input class="inum" type="number" inputmode="decimal" placeholder="'+compTxt+'" value="'+(d.buy!==undefined&&d.buy!==''?d.buy:compTxt==='--'?'':compTxt)+'" style="border-color:#ef4444" data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="buy">'
+        :'<div class="icomp'+(low?' low':'')+'">'+compTxt+'</div>')
+      +'</div>'
       +'</div></div>';
   });
   document.getElementById('ilist').innerHTML=html;
