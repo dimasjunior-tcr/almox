@@ -402,8 +402,13 @@ if(!DB.extractDates)DB.extractDates={};
 })();
 
 function gi(cat,nome){
-  if(DB.est[cat]&&DB.est[cat][nome]!=null)return DB.est[cat][nome];
-  return{min:'',est:'',max:''};
+  var d=DB.est[cat]&&DB.est[cat][nome]!=null?DB.est[cat][nome]:{min:'',est:'',max:''};
+  var def=CATS[cat]&&CATS[cat].itens.find(function(i){return i.n===nome;});
+  return{
+    min:d.min!==''?d.min:(def&&def.dmin!==undefined?String(def.dmin):''),
+    est:d.est!==undefined?d.est:'',
+    max:d.max!==''?d.max:(def&&def.dmax!==undefined?String(def.dmax):'')
+  };
 }
 function si(cat,nome,campo,val){
   if(!DB.est[cat])DB.est[cat]={};
