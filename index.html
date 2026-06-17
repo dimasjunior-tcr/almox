@@ -1385,7 +1385,7 @@ function limparCategoria(){
     'Limpar '+CATS[CUR].emoji+' '+CUR+'?',
     'Isso irá zerar as quantidades contadas nesta categoria.',
     function(){
-      CATS[CUR].itens.forEach(function(i){if(DB.est[CUR]&&DB.est[CUR][i.n])DB.est[CUR][i.n].est='';});
+      CATS[CUR].itens.forEach(function(i){if(DB.est[CUR]&&DB.est[CUR][i.n]){DB.est[CUR][i.n].est='';DB.est[CUR][i.n].buy='';}});
       if(DB.contadores)delete DB.contadores[CUR];
       save();renderItems();renderCntUI();
     },
@@ -1398,7 +1398,7 @@ function limparLista(){
     'Limpar Levantamento?',
     'Isso irá zerar todas as quantidades de estoque contadas e limpar o levantamento.',
     function(){
-      KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+      KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
       DB.contadores={};DB.levantamentoData='';
       DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
       save();renderPedido();
