@@ -1150,10 +1150,19 @@ function syncPush(){
 
 function syncApply(data){
   if(!data||typeof data!=='object') return;
+  // Merge hist: keep entries from both local and remote, deduplicate by id
+  var localHist=DB.hist||[];
+  var remoteHist=(data.hist)||[];
+  var histById={};
+  localHist.forEach(function(h){if(h&&h.id)histById[h.id]=h;});
+  remoteHist.forEach(function(h){if(h&&h.id)histById[h.id]=h;});
+  var mergedHist=Object.values(histById).sort(function(a,b){return b.id-a.id;});
   DB = data;
+  DB.hist = mergedHist;
   if(!DB.est) DB.est={};
-  if(!DB.hist) DB.hist=[];
   try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
+  // Se o merge adicionou entradas que o remoto não tinha, re-push silencioso
+  if(mergedHist.length>remoteHist.length) syncPush();
   refreshHome();
   if(!document.getElementById('s-contagem').classList.contains('hidden')) renderItems();
   else if(!document.getElementById('s-pedido').classList.contains('hidden')) renderPedido();
