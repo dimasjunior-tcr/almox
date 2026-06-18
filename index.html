@@ -422,17 +422,23 @@ function si(cat,nome,campo,val){
   refreshHome();
 }
 
-// Avança para o próximo item na coluna Estoque
+// Avança para o próximo item na coluna Estoque (síncrono para iOS)
 function advanceEstoque(currentInput){
+  var cat=decodeURIComponent(currentInput.dataset.cat);
+  var nome=decodeURIComponent(currentInput.dataset.nome);
   var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
   var idx=estInputs.indexOf(currentInput);
   var nextNome=idx>=0&&idx<estInputs.length-1?estInputs[idx+1].dataset.nome:null;
-  currentInput.blur();
+  // Salva valor atual sem depender do evento change
+  si(cat,nome,'est',currentInput.value);
+  _highlightMissing=false;
+  save();
+  // Re-renderiza para atualizar cores/comprar
+  renderItems();
+  // Foca próximo input imediatamente (ainda no contexto do gesto — iOS exige isso)
   if(nextNome){
-    setTimeout(function(){
-      var el=document.querySelector('input[data-campo="est"][data-nome="'+nextNome+'"]');
-      if(el){el.focus();el.select();el.scrollIntoView({block:'center',behavior:'smooth'});}
-    },80);
+    var next=document.querySelector('input[data-campo="est"][data-nome="'+nextNome+'"]');
+    if(next){next.focus();next.select();next.scrollIntoView({block:'center',behavior:'smooth'});}
   }
 }
 
