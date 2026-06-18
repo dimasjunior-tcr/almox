@@ -431,21 +431,25 @@ document.addEventListener('keydown',function(e){
   if(t.dataset.campo==='est'){
     var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
     var idx=estInputs.indexOf(t);
-    if(idx>=0&&idx<estInputs.length-1){
-      var next=estInputs[idx+1];
-      next.focus();next.select();
-      next.scrollIntoView({block:'center',behavior:'smooth'});
-    }else{
-      t.blur();
+    var nextNome=idx>=0&&idx<estInputs.length-1?estInputs[idx+1].dataset.nome:null;
+    t.blur();
+    if(nextNome){
+      setTimeout(function(){
+        var el=document.querySelector('input[data-campo="est"][data-nome="'+nextNome+'"]');
+        if(el){el.focus();el.select();el.scrollIntoView({block:'center',behavior:'smooth'});}
+      },50);
     }
   }else{
     var all=Array.from(document.querySelectorAll('input[data-cat]'));
     var idx2=all.indexOf(t);
-    if(idx2>=0&&idx2<all.length-1){
-      var next2=all[idx2+1];
-      next2.focus();next2.select();
-      next2.scrollIntoView({block:'center',behavior:'smooth'});
-    }else{t.blur();}
+    var nextNome2=idx2>=0&&idx2<all.length-1?all[idx2+1].dataset.nome:null;
+    t.blur();
+    if(nextNome2){
+      setTimeout(function(){
+        var el2=document.querySelector('input[data-nome="'+nextNome2+'"]');
+        if(el2){el2.focus();el2.select();el2.scrollIntoView({block:'center',behavior:'smooth'});}
+      },50);
+    }
   }
 });
 
