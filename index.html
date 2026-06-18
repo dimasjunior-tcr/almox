@@ -613,7 +613,7 @@ function refreshHome(){
     var levDays=daysSince(DB.extractDates&&DB.extractDates[k]);
     var barColor=c.cor;
     if(sent){barColor=(cntDays===0)?'#22c55e':'#f59e0b';}
-    var cntLbl=sent?daysLabel(cntDays,'#22c55e','#f59e0b')
+    var cntLbl=cntDays!==null?daysLabel(cntDays,'#22c55e','#f59e0b')
       :'<span style="color:'+c.cor+';font-weight:700;font-size:11px;">'+ct+'/'+c.itens.length+'</span>';
     var levLbl=daysLabel(levDays,'#22c55e','#f59e0b');
     var rightCol='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:54px;">'
@@ -1081,7 +1081,7 @@ function buildCatPage(cat,pdfData,now){
 function doPDF(){
   if(pdfSel.size===0){alert('Selecione pelo menos uma categoria.');return;}
   closeModal('m-pdf');
-  var cats=KEYS.filter(function(c){return pdfSel.has(c)&&pdfData.byCat[c];});
+  var cats=Object.keys(pdfData.byCat).filter(function(c){return pdfSel.has(c)&&pdfData.byCat[c];});
   if(cats.length===0){alert('Nenhuma categoria valida.');return;}
   var now=new Date().toLocaleString('pt-BR');
   var files=cats.map(function(cat){
