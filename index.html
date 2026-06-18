@@ -422,21 +422,30 @@ function si(cat,nome,campo,val){
   refreshHome();
 }
 
-// Enter/Go avança para o próximo input
+// Enter/Go avança para o próximo item (campo est)
 document.addEventListener('keydown',function(e){
   if(e.key!=='Enter'&&e.key!=='Go')return;
   var t=e.target;
   if(!t.dataset||!t.dataset.cat)return;
   e.preventDefault();
-  var all=Array.from(document.querySelectorAll('input[data-cat]'));
-  var idx=all.indexOf(t);
-  if(idx>=0&&idx<all.length-1){
-    var next=all[idx+1];
-    next.focus();
-    next.select();
-    next.scrollIntoView({block:'center',behavior:'smooth'});
+  if(t.dataset.campo==='est'){
+    var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
+    var idx=estInputs.indexOf(t);
+    if(idx>=0&&idx<estInputs.length-1){
+      var next=estInputs[idx+1];
+      next.focus();next.select();
+      next.scrollIntoView({block:'center',behavior:'smooth'});
+    }else{
+      t.blur();
+    }
   }else{
-    t.blur();
+    var all=Array.from(document.querySelectorAll('input[data-cat]'));
+    var idx2=all.indexOf(t);
+    if(idx2>=0&&idx2<all.length-1){
+      var next2=all[idx2+1];
+      next2.focus();next2.select();
+      next2.scrollIntoView({block:'center',behavior:'smooth'});
+    }else{t.blur();}
   }
 });
 
