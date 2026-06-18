@@ -422,23 +422,29 @@ function si(cat,nome,campo,val){
   refreshHome();
 }
 
-// Enter/Go avança para o próximo item (campo est)
+// Avança para o próximo item na coluna Estoque
+function advanceEstoque(currentInput){
+  var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
+  var idx=estInputs.indexOf(currentInput);
+  var nextNome=idx>=0&&idx<estInputs.length-1?estInputs[idx+1].dataset.nome:null;
+  currentInput.blur();
+  if(nextNome){
+    setTimeout(function(){
+      var el=document.querySelector('input[data-campo="est"][data-nome="'+nextNome+'"]');
+      if(el){el.focus();el.select();el.scrollIntoView({block:'center',behavior:'smooth'});}
+    },80);
+  }
+}
+
+// Enter/Go no teclado (desktop e mobile)
 document.addEventListener('keydown',function(e){
-  if(e.key!=='Enter'&&e.key!=='Go')return;
+  var isEnter=e.key==='Enter'||e.key==='Go'||e.keyCode===13;
+  if(!isEnter)return;
   var t=e.target;
   if(!t.dataset||!t.dataset.cat)return;
   e.preventDefault();
   if(t.dataset.campo==='est'){
-    var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
-    var idx=estInputs.indexOf(t);
-    var nextNome=idx>=0&&idx<estInputs.length-1?estInputs[idx+1].dataset.nome:null;
-    t.blur();
-    if(nextNome){
-      setTimeout(function(){
-        var el=document.querySelector('input[data-campo="est"][data-nome="'+nextNome+'"]');
-        if(el){el.focus();el.select();el.scrollIntoView({block:'center',behavior:'smooth'});}
-      },50);
-    }
+    advanceEstoque(t);
   }else{
     var all=Array.from(document.querySelectorAll('input[data-cat]'));
     var idx2=all.indexOf(t);
@@ -448,9 +454,17 @@ document.addEventListener('keydown',function(e){
       setTimeout(function(){
         var el2=document.querySelector('input[data-nome="'+nextNome2+'"]');
         if(el2){el2.focus();el2.select();el2.scrollIntoView({block:'center',behavior:'smooth'});}
-      },50);
+      },80);
     }
   }
+});
+
+// Botão → ao lado do Estoque (toque no celular)
+document.addEventListener('click',function(e){
+  if(!e.target.classList.contains('next-est-btn'))return;
+  var nome=e.target.dataset.nome;
+  var inp=document.querySelector('input[data-campo="est"][data-nome="'+nome+'"]');
+  if(inp)advanceEstoque(inp);
 });
 
 // Single delegated listener — no inline JS in inputs
@@ -668,9 +682,12 @@ function renderItems(){
       +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
       +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE</label>'
-      +'<input class="inum" type="number" inputmode="decimal" placeholder="0" value="'+(d.est||'')+'"'
-      +' style="border-color:'+(ok?c.cor:'#5c3010')+'"'
-      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est"></div>'
+      +'<div style="display:flex;gap:4px;align-items:center;">'
+      +'<input class="inum" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" value="'+(d.est||'')+'"'
+      +' style="border-color:'+(ok?c.cor:'#5c3010')+';flex:1;"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est">'
+      +'<button type="button" class="next-est-btn" data-nome="'+encNome+'" style="min-width:32px;height:36px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#94a3b8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">→</button>'
+      +'</div></div>'
       +'<div class="ig"><label class="ilbl">COMPRAR</label>'
       +(CUR==='CARNES'
         ?'<input class="inum" type="number" inputmode="decimal" placeholder="'+compTxt+'" value="'+(d.buy!==undefined&&d.buy!==''?d.buy:compTxt==='--'?'':compTxt)+'" style="border-color:#ef4444" data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="buy">'
