@@ -1084,12 +1084,12 @@ function doPDF(){
   var cats=KEYS.filter(function(c){return pdfSel.has(c)&&pdfData.byCat[c];});
   if(cats.length===0){alert('Nenhuma categoria valida.');return;}
   var now=new Date().toLocaleString('pt-BR');
-  var title=pdfData.nome+' '+pdfData.dataStr+' — Coco Bambu';
-  var html=cats.length===1?buildSingleCatHtml(cats[0],pdfData,now):buildMultiCatHtml(cats,pdfData,now);
-  var fname=cats.length===1?cats[0]+' - Coco Bambu.html':'Levantamento '+pdfData.dataStr+' - Coco Bambu.html';
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var file=new File([blob],fname,{type:'text/html'});
-  shareOrDownload([file],title);
+  var files=cats.map(function(cat){
+    var html=buildSingleCatHtml(cat,pdfData,now);
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    return new File([blob],cat+' - Coco Bambu.html',{type:'text/html'});
+  });
+  shareOrDownload(files,pdfData.nome+' '+pdfData.dataStr+' — Coco Bambu');
 }
 
 // ===== SYNC =====
@@ -1340,11 +1340,12 @@ function doExportAllPdfs(){
   if(!DB.extractDates)DB.extractDates={};
   cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
   save();refreshHome();
-  var html=cats.length===1?buildSingleCatHtml(cats[0],pdfDataLocal,now):buildMultiCatHtml(cats,pdfDataLocal,now);
-  var fname=cats.length===1?cats[0]+' - Coco Bambu.html':'Levantamento '+levData+' - Coco Bambu.html';
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var file=new File([blob],fname,{type:'text/html'});
-  shareOrDownload([file],'Levantamento '+levData+' — Coco Bambu');
+  var files=cats.map(function(cat){
+    var html=buildSingleCatHtml(cat,pdfDataLocal,now);
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    return new File([blob],cat+' - Coco Bambu.html',{type:'text/html'});
+  });
+  shareOrDownload(files,'Levantamento '+levData+' — Coco Bambu');
   clearAfter();
 }
 
