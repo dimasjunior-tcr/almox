@@ -459,13 +459,6 @@ document.addEventListener('keydown',function(e){
   }
 });
 
-// Botão → ao lado do Estoque (toque no celular)
-document.addEventListener('click',function(e){
-  if(!e.target.classList.contains('next-est-btn'))return;
-  var nome=e.target.dataset.nome;
-  var inp=document.querySelector('input[data-campo="est"][data-nome="'+nome+'"]');
-  if(inp)advanceEstoque(inp);
-});
 
 // Single delegated listener — no inline JS in inputs
 document.addEventListener('change',function(e){
@@ -682,12 +675,9 @@ function renderItems(){
       +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
       +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE</label>'
-      +'<div style="display:flex;gap:4px;align-items:center;">'
       +'<input class="inum" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" value="'+(d.est||'')+'"'
-      +' style="border-color:'+(ok?c.cor:'#5c3010')+';flex:1;"'
-      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est">'
-      +'<button type="button" class="next-est-btn" data-nome="'+encNome+'" style="min-width:32px;height:36px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#94a3b8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">→</button>'
-      +'</div></div>'
+      +' style="border-color:'+(ok?c.cor:'#5c3010')+'"'
+      +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est"></div>'
       +'<div class="ig"><label class="ilbl">COMPRAR</label>'
       +(CUR==='CARNES'
         ?'<input class="inum" type="number" inputmode="decimal" placeholder="'+compTxt+'" value="'+(d.buy!==undefined&&d.buy!==''?d.buy:compTxt==='--'?'':compTxt)+'" style="border-color:#ef4444" data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="buy">'
@@ -1449,6 +1439,48 @@ function closeDrawer(){
 if(SYNC_URL) fbSignInAnon(function(){ syncListen(); });
 go('home');
 
+</script>
+
+<div id="est-toolbar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9998;background:#1e293b;border-top:1px solid #334155;padding:8px 12px;box-shadow:0 -2px 12px rgba(0,0,0,.5);">
+  <button id="est-toolbar-btn" type="button" style="width:100%;padding:11px;background:#0f766e;border:none;border-radius:9px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">→ Próximo item</button>
+</div>
+<script>
+var _focusedEst=null;
+function posEstToolbar(){
+  var tb=document.getElementById('est-toolbar');
+  if(!tb||tb.style.display==='none')return;
+  if(window.visualViewport){
+    var vv=window.visualViewport;
+    tb.style.bottom=Math.max(0,window.innerHeight-vv.offsetTop-vv.height)+'px';
+  }
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',posEstToolbar);
+  window.visualViewport.addEventListener('scroll',posEstToolbar);
+}
+document.addEventListener('focusin',function(e){
+  if(e.target.dataset&&e.target.dataset.campo==='est'){
+    _focusedEst=e.target;
+    document.getElementById('est-toolbar').style.display='block';
+    posEstToolbar();
+  }
+});
+document.addEventListener('focusout',function(e){
+  if(e.target.dataset&&e.target.dataset.campo==='est'){
+    setTimeout(function(){
+      var a=document.activeElement;
+      if(a&&a.id==='est-toolbar-btn')return;
+      if(!a||!a.dataset||a.dataset.campo!=='est'){
+        document.getElementById('est-toolbar').style.display='none';
+        _focusedEst=null;
+      }
+    },200);
+  }
+});
+document.getElementById('est-toolbar-btn').addEventListener('mousedown',function(e){e.preventDefault();});
+document.getElementById('est-toolbar-btn').addEventListener('click',function(){
+  if(_focusedEst)advanceEstoque(_focusedEst);
+});
 </script>
 </body>
 </html>
