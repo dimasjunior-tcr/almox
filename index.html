@@ -1478,6 +1478,11 @@ document.addEventListener('focusout',function(e){
   }
 });
 document.getElementById('est-toolbar-btn').addEventListener('mousedown',function(e){e.preventDefault();});
+document.getElementById('est-toolbar-btn').addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
+document.getElementById('est-toolbar-btn').addEventListener('touchend',function(e){
+  e.preventDefault();
+  if(_focusedEst)advanceEstoque(_focusedEst);
+});
 document.getElementById('est-toolbar-btn').addEventListener('click',function(){
   if(_focusedEst)advanceEstoque(_focusedEst);
 });
