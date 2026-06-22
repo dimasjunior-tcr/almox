@@ -329,7 +329,7 @@ button{cursor:pointer;font-family:inherit}
     <button class="sel-all" onclick="pdfToggleAll()">Selecionar / Desmarcar tudo</button>
     <div class="pdf-grid" id="pdf-grid"></div>
     <div class="mbtns">
-      <button class="mcancel" onclick="_clearListaAfterPdf=false;closeModal('m-pdf')">Cancelar</button>
+      <button class="mcancel" onclick="_clearListaAfterPdf=false;_pdfIsPedido=false;closeModal('m-pdf')">Cancelar</button>
       <button class="mok" style="background:#d97706" onclick="doPDF()">Gerar PDF</button>
     </div>
   </div>
@@ -996,6 +996,7 @@ function renderCfg(){
 
 // ===== PDF =====
 function openPdfModal(histId){
+  _pdfIsPedido=false;
   var source=histId?DB.hist.find(function(h){return h.id===histId;}):null;
   var byCat;
   if(source){
@@ -1106,17 +1107,22 @@ function doPDF(){
   var printHtmlStr=buildMultiCatHtml(cats,pdfData,now);
   if(_pdfIsPedido){
     _pdfIsPedido=false;
-    var levData=pdfData.dataStr;
-    var nomeAuto='Levantamento '+levData;
-    saveHist(nomeAuto);
+    // Save hist directly from pdfData (avoids re-running calcAllSent which filters by min)
+    var allItems=[];
+    Object.keys(pdfData.byCat).forEach(function(k){allItems=allItems.concat(pdfData.byCat[k]);});
+    if(allItems.length>0){
+      var need=allItems.filter(function(i){return i.buy>0;});
+      DB.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
+        data:new Date().toISOString(),dataStr:pdfData.dataStr,
+        total:need.length,byCat:pdfData.byCat,contadores:pdfData.contadores||{}});
+    }
     var exportTs=Date.now();
     if(!DB.extractDates)DB.extractDates={};
     cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
-    save();refreshHome();
-    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
     DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
     DB.contadores={};DB.levantamentoData='';
-    save();renderPedido();
+    save();refreshHome();renderPedido();
   }
   showShareAction(files,printHtmlStr,title);
 }
