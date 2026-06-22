@@ -376,6 +376,7 @@ var pdfData = null;
 var pdfSel = new Set();
 var _contadorNome = '';
 var _clearListaAfterPdf = false;
+var _pdfIsPedido = false;
 var _highlightMissing = false;
 
 function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
@@ -1103,6 +1104,20 @@ function doPDF(){
   });
   var title=pdfData.nome+' '+pdfData.dataStr+' — Coco Bambu';
   var printHtmlStr=buildMultiCatHtml(cats,pdfData,now);
+  if(_pdfIsPedido){
+    _pdfIsPedido=false;
+    var levData=pdfData.dataStr;
+    var nomeAuto='Levantamento '+levData;
+    saveHist(nomeAuto);
+    var exportTs=Date.now();
+    if(!DB.extractDates)DB.extractDates={};
+    cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
+    save();refreshHome();
+    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
+    DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
+    DB.contadores={};DB.levantamentoData='';
+    save();renderPedido();
+  }
   showShareAction(files,printHtmlStr,title);
 }
 
@@ -1296,16 +1311,37 @@ function _entrarContagem(){
   renderCntUI();
 }
 function askSaveBeforePdf(){
-  var need=calcAllSent().filter(function(i){return i.buy>0;});
+  var allItems=calcAllSent();
+  if(allItems.length===0){alert('Nenhum levantamento enviado para exportar.');return;}
+  var byCat={};
+  allItems.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
   var levData=DB.sentLevData||DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
-  var nomeAuto='Levantamento '+levData;
-  if(need.length===0){_clearListaAfterPdf=true;doExportAllPdfs();return;}
-  showConfirm(
-    'Salvar no Histórico?',
-    'Deseja salvar este levantamento no histórico?\n\n"'+nomeAuto+'"',
-    function(){saveHist(nomeAuto);_clearListaAfterPdf=true;doExportAllPdfs();},
-    null
-  );
+  var contadores=Object.assign({},DB.sentContadores||{},DB.contadores||{});
+  pdfData={nome:'Levantamento',dataStr:levData,byCat:byCat,contadores:contadores};
+  _pdfIsPedido=true;
+  var cats=Object.keys(byCat);
+  pdfSel=new Set(cats);
+  document.getElementById('m-pdf-sub').textContent='Levantamento — '+levData;
+  var html='';
+  cats.forEach(function(cat){
+    var c=CATS[cat]||{emoji:'',cor:'#333'};
+    var cnt=byCat[cat].length;
+    var needCnt=byCat[cat].filter(function(i){return i.buy>0;}).length;
+    html+='<div class="pdf-opt sel" data-pdfcat="'+encodeURIComponent(cat)+'">'
+      +'<div class="pdf-chk">&#10003;</div>'
+      +'<div><div class="pdf-lbl">'+c.emoji+' '+cat+'</div>'
+      +'<div class="pdf-cnt">'+needCnt+' para comprar / '+cnt+' total</div></div></div>';
+  });
+  document.getElementById('pdf-grid').innerHTML=html;
+  document.getElementById('pdf-grid').onclick=function(e){
+    var opt=e.target.closest('.pdf-opt');
+    if(!opt)return;
+    var cat=decodeURIComponent(opt.dataset.pdfcat);
+    var chk=opt.querySelector('.pdf-chk');
+    if(pdfSel.has(cat)){pdfSel.delete(cat);opt.classList.remove('sel');chk.innerHTML='';}
+    else{pdfSel.add(cat);opt.classList.add('sel');chk.innerHTML='&#10003;';}
+  };
+  openModal('m-pdf');
 }
 function buildSingleCatHtml(cat,pdfData,now){
   var content=buildCatPage(cat,pdfData,now);
@@ -1361,40 +1397,6 @@ function shareOrDownload(files,title){
       setTimeout(function(){URL.revokeObjectURL(url);},60000);
     });
   }
-}
-function doExportAllPdfs(){
-  var allItems=calcAllSent();
-  var byCat={};
-  allItems.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
-  var cats=KEYS.filter(function(k){return byCat[k];});
-  if(cats.length===0){alert('Nenhum levantamento enviado para exportar.');return;}
-  var levData=DB.sentLevData||DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
-  var contadores=Object.assign({},DB.sentContadores||{},DB.contadores||{});
-  var pdfDataLocal={nome:'Levantamento',dataStr:levData,byCat:byCat,contadores:contadores};
-  var now=new Date().toLocaleString('pt-BR');
-  function clearAfter(){
-    if(_clearListaAfterPdf){
-      _clearListaAfterPdf=false;
-      KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});});
-      DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
-      DB.contadores={};DB.levantamentoData='';
-      save();
-      if(!document.getElementById('s-pedido').classList.contains('hidden'))renderPedido();
-    }
-  }
-  var exportTs=Date.now();
-  if(!DB.extractDates)DB.extractDates={};
-  cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
-  save();refreshHome();
-  var files=cats.map(function(cat){
-    var html=buildSingleCatHtml(cat,pdfDataLocal,now);
-    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    return new File([blob],cat+' - Coco Bambu.html',{type:'text/html'});
-  });
-  var title='Levantamento '+levData+' — Coco Bambu';
-  var printHtmlStr=buildMultiCatHtml(cats,pdfDataLocal,now);
-  showShareAction(files,printHtmlStr,title);
-  clearAfter();
 }
 
 function showConfirm(ttl,msg,onYes,onNo){
