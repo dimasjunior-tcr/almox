@@ -895,7 +895,10 @@ function renderHist(){
       var items=h.byCat[cat];
       var buyItems=items.filter(function(i){return i.buy>0;});
       var okItems=items.filter(function(i){return i.buy===0;});
-      dets+='<div class="hctitle" style="margin:8px 0 4px;">'+(CATS[cat]?CATS[cat].emoji:'')+' '+cat+'</div>';
+      dets+='<div class="hctitle" style="margin:8px 0 4px;display:flex;align-items:center;justify-content:space-between;">'
+        +'<span>'+(CATS[cat]?CATS[cat].emoji:'')+' '+cat+'</span>'
+        +'<button onclick="restaurarContagem('+h.id+',\''+encodeURIComponent(cat)+'\')" style="font-size:10px;padding:2px 8px;border-radius:6px;background:#2563eb;color:#fff;border:none;cursor:pointer;font-weight:700;">↩ Restaurar</button>'
+        +'</div>';
       if(buyItems.length>0){
         buyItems.forEach(function(i){
           dets+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 8px;border-radius:4px;background:#3d1505;margin:2px 0;">'
@@ -926,6 +929,20 @@ function renderHist(){
       +'<div class="hbody hidden">'+dets+'</div></div>';
   });
   el.innerHTML=html;
+}
+function restaurarContagem(histId,catEnc){
+  var cat=decodeURIComponent(catEnc);
+  var h=DB.hist.find(function(x){return x.id===histId;});
+  if(!h||!h.byCat||!h.byCat[cat]){alert('Dados não encontrados.');return;}
+  if(!confirm('Restaurar contagem de '+cat+' a partir do histórico "'+h.nome+'"?\n\nOs valores atuais de estoque desta categoria serão substituídos.'))return;
+  if(!DB.est[cat])DB.est[cat]={};
+  h.byCat[cat].forEach(function(item){
+    if(!DB.est[cat][item.nome])DB.est[cat][item.nome]={min:'',est:'',max:''};
+    DB.est[cat][item.nome].est=item.es===''||item.es===undefined?'':String(item.es);
+  });
+  save();
+  showToast('Contagem de '+cat+' restaurada!','#2563eb');
+  if(!document.getElementById('s-contagem').classList.contains('hidden'))renderItems();
 }
 function togHist(btn){
   var b=btn.nextElementSibling;
