@@ -322,7 +322,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </div>
 
-<div class="moverlay hidden" id="m-pdf">
+<div class="moverlay hidden" id="m-pdf" onclick="if(event.target===this){_clearListaAfterPdf=false;_pdfIsPedido=false;closeModal('m-pdf');}">
   <div class="modal">
     <div class="mtitle">Exportar PDF</div>
     <div class="msub" id="m-pdf-sub">Escolha as categorias</div>
@@ -442,10 +442,9 @@ function advanceEstoque(currentInput){
   var estInputs=Array.from(document.querySelectorAll('input[data-campo="est"]'));
   var idx=estInputs.indexOf(currentInput);
   var nextNome=idx>=0&&idx<estInputs.length-1?estInputs[idx+1].dataset.nome:null;
-  // Salva valor atual sem depender do evento change
+  // Salva valor atual sem depender do evento change (si() já chama save internamente)
   si(cat,nome,'est',currentInput.value);
   _highlightMissing=false;
-  save();
   // Re-renderiza para atualizar cores/comprar
   renderItems();
   // Foca próximo input imediatamente (ainda no contexto do gesto — iOS exige isso)
@@ -941,6 +940,7 @@ function restaurarContagem(histId,catEnc){
     DB.est[cat][item.nome].est=item.es===''||item.es===undefined?'':String(item.es);
   });
   save();
+  refreshHome();
   showToast('Contagem de '+cat+' restaurada!','#2563eb');
   if(!document.getElementById('s-contagem').classList.contains('hidden'))renderItems();
 }
