@@ -1495,6 +1495,26 @@ function closeDrawer(){
 }
 
 if(SYNC_URL) fbSignInAnon(function(){ syncListen(); });
+
+// Re-sync when app comes back to foreground (mobile SSE dies silently in background)
+function syncRefresh(){
+  if(!SYNC_URL) return;
+  fbSignInAnon(function(){
+    fetch(syncEndpoint())
+      .then(function(r){ return r.json(); })
+      .then(function(data){ syncApply(data); })
+      .catch(function(){});
+    if(!_syncSource || _syncSource.readyState === 2) syncListen();
+  });
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') syncRefresh();
+});
+// iOS Safari bfcache restore
+window.addEventListener('pageshow', function(e){
+  if(e.persisted) syncRefresh();
+});
+
 go('home');
 
 </script>
