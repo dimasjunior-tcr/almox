@@ -1193,6 +1193,29 @@ function syncPush(){
   });
 }
 
+function _mergeEstField(localEst, remoteEst){
+  // Keeps local non-empty est/buy values when remote is empty — prevents sync from wiping active counts
+  var merged=JSON.parse(JSON.stringify(remoteEst||{}));
+  Object.keys(localEst||{}).forEach(function(cat){
+    if(!merged[cat])merged[cat]={};
+    Object.keys(localEst[cat]||{}).forEach(function(nome){
+      var loc=localEst[cat][nome]||{};
+      if(!merged[cat][nome])merged[cat][nome]={};
+      var rem=merged[cat][nome];
+      if(loc.est!==''&&loc.est!=null&&(rem.est===''||rem.est==null))rem.est=loc.est;
+      if(loc.buy!==''&&loc.buy!=null&&(rem.buy===''||rem.buy==null))rem.buy=loc.buy;
+    });
+  });
+  return merged;
+}
+function _mergeSentEst(localSent, remoteSent){
+  // If local has sentEst for a category and remote doesn't, keep local
+  var merged=Object.assign({},remoteSent||{});
+  Object.keys(localSent||{}).forEach(function(cat){
+    if(!merged[cat])merged[cat]=localSent[cat];
+  });
+  return merged;
+}
 function syncApply(data){
   if(!data||typeof data!=='object') return;
   // Merge hist
@@ -1210,11 +1233,17 @@ function syncApply(data){
   }
   var mergedSentDates=mergeDates(DB.sentDates,data.sentDates);
   var mergedExtractDates=mergeDates(DB.extractDates,data.extractDates);
+  // Capture local est/sentEst BEFORE overwriting DB
+  var localEst=DB.est||{};
+  var localSentEst=DB.sentEst||{};
   DB = data;
+  // Merge est: local non-empty values are never wiped by remote empty values
+  DB.est=_mergeEstField(localEst, DB.est);
+  // Merge sentEst: preserve local sent data not yet on remote
+  DB.sentEst=_mergeSentEst(localSentEst, DB.sentEst);
   DB.hist = mergedHist;
   DB.sentDates = mergedSentDates;
   DB.extractDates = mergedExtractDates;
-  if(!DB.est) DB.est={};
   try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
   if(mergedHist.length>remoteHist.length) syncPush();
   refreshHome();
@@ -1525,10 +1554,20 @@ if(SYNC_URL) fbSignInAnon(function(){ syncListen(); });
 function syncRefresh(){
   if(!SYNC_URL) return;
   fbSignInAnon(function(){
-    fetch(syncEndpoint())
+    // Push local data first to protect active counts, then pull to get updates from other devices
+    _syncPushing=true;
+    fetch(syncEndpoint(),{method:'PUT',body:JSON.stringify(DB),headers:{'Content-Type':'application/json'}})
+      .then(function(){
+        _syncPushing=false;
+        return fetch(syncEndpoint());
+      })
       .then(function(r){ return r.json(); })
       .then(function(data){ syncApply(data); })
-      .catch(function(){});
+      .catch(function(){
+        _syncPushing=false;
+        // Push failed — still try to pull with merge protection
+        fetch(syncEndpoint()).then(function(r){return r.json();}).then(function(data){syncApply(data);}).catch(function(){});
+      });
     if(!_syncSource || _syncSource.readyState === 2) syncListen();
   });
 }
