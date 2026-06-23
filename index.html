@@ -529,13 +529,12 @@ function calcAllSent(){
     CATS[k].itens.forEach(function(item){
       var live=gi(k,item.n);
       var mn=parseFloat(live.min);
-      if(isNaN(mn))return;
       var sentVal=DB.sentEst[k][item.n];
       if(sentVal===undefined||sentVal==='')return;
       var es=parseFloat(sentVal);
       var customBuy=DB.est[k]&&DB.est[k][item.n]&&DB.est[k][item.n].buy!==undefined&&DB.est[k][item.n].buy!==''?parseFloat(DB.est[k][item.n].buy):undefined;
-      var buy=customBuy!==undefined&&!isNaN(customBuy)?customBuy:(!isNaN(es)&&es<mn)?+(mn-es).toFixed(2):0;
-      out.push({cat:k,nome:item.n,und:item.u,mn:mn,es:isNaN(es)?'':es,buy:buy});
+      var buy=customBuy!==undefined&&!isNaN(customBuy)?customBuy:(!isNaN(mn)&&!isNaN(es)&&es<mn)?+(mn-es).toFixed(2):0;
+      out.push({cat:k,nome:item.n,und:item.u,mn:isNaN(mn)?'':mn,es:isNaN(es)?'':es,buy:buy});
     });
   });
   return out;
@@ -1118,14 +1117,18 @@ function doPDF(){
   var printHtmlStr=buildMultiCatHtml(cats,pdfData,now);
   if(_pdfIsPedido){
     _pdfIsPedido=false;
-    // Save hist directly from pdfData (avoids re-running calcAllSent which filters by min)
+    // Save hist only from the categories actually exported (cats), not every category shown in the modal
+    var exportedByCat={};
+    cats.forEach(function(k){if(pdfData.byCat[k])exportedByCat[k]=pdfData.byCat[k];});
+    var exportedContadores={};
+    cats.forEach(function(k){if(pdfData.contadores&&pdfData.contadores[k])exportedContadores[k]=pdfData.contadores[k];});
     var allItems=[];
-    Object.keys(pdfData.byCat).forEach(function(k){allItems=allItems.concat(pdfData.byCat[k]);});
+    Object.keys(exportedByCat).forEach(function(k){allItems=allItems.concat(exportedByCat[k]);});
     if(allItems.length>0){
       var need=allItems.filter(function(i){return i.buy>0;});
       DB.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
         data:new Date().toISOString(),dataStr:pdfData.dataStr,
-        total:need.length,byCat:pdfData.byCat,contadores:pdfData.contadores||{}});
+        total:need.length,byCat:exportedByCat,contadores:exportedContadores});
     }
     var exportTs=Date.now();
     if(!DB.extractDates)DB.extractDates={};
