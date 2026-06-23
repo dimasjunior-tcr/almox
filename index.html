@@ -549,15 +549,9 @@ function showToast(msg,color){
 }
 function enviarLevantamento(){
   var catsToSend=KEYS.filter(function(k){
-    return CATS[k].itens.length>0&&CATS[k].itens.every(function(i){return gi(k,i.n).est!=='';});
+    return CATS[k].itens.length>0&&CATS[k].itens.some(function(i){return gi(k,i.n).est!=='';});
   });
-  var curMissing=CATS[CUR].itens.filter(function(i){return gi(CUR,i.n).est==='';});
-  if(curMissing.length>0){
-    alert(CATS[CUR].emoji+' '+CUR+': faltam '+curMissing.length+' item(s):\n\n'+curMissing.map(function(i){return '• '+i.n;}).join('\n'));
-    _highlightMissing=true;renderItems();
-    return;
-  }
-  if(catsToSend.length===0){showToast('Nenhuma categoria completa para enviar.','#ef4444');return;}
+  if(catsToSend.length===0){showToast('Nenhuma contagem para enviar.','#ef4444');return;}
   var hasChanges=catsToSend.some(function(k){
     if(!DB.sentEst||!DB.sentEst[k])return true;
     return CATS[k].itens.some(function(i){
