@@ -1134,6 +1134,9 @@ function doPDF(){
     if(!DB.extractDates)DB.extractDates={};
     cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
     cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
+    if(!DB.sentEst)DB.sentEst={};
+    if(!DB.sentContadores)DB.sentContadores={};
+    if(!DB.contadores)DB.contadores={};
     cats.forEach(function(k){delete DB.sentEst[k];delete DB.sentContadores[k];delete DB.contadores[k];});
     var sentEstKeys=Object.keys(DB.sentEst||{});
     if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
@@ -1234,6 +1237,8 @@ function syncApply(data){
   // Capture local est/sentEst BEFORE overwriting DB
   var localEst=DB.est||{};
   var localSentEst=DB.sentEst||{};
+  var localContadores=DB.contadores||{};
+  var localSentContadores=DB.sentContadores||{};
   DB = data;
   // Merge est: local non-empty values are never wiped by remote empty values
   DB.est=_mergeEstField(localEst, DB.est);
@@ -1242,6 +1247,12 @@ function syncApply(data){
   DB.hist = mergedHist;
   DB.sentDates = mergedSentDates;
   DB.extractDates = mergedExtractDates;
+  // Guarantee these always exist as objects after a remote snapshot may lack them
+  if(!DB.est)DB.est={};
+  if(!DB.contadores)DB.contadores=localContadores;
+  if(!DB.sentContadores)DB.sentContadores=localSentContadores;
+  if(!DB.sentLevData)DB.sentLevData='';
+  if(!DB.levantamentoData)DB.levantamentoData='';
   try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
   if(mergedHist.length>remoteHist.length) syncPush();
   refreshHome();
