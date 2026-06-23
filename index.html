@@ -1136,9 +1136,10 @@ function doPDF(){
     var exportTs=Date.now();
     if(!DB.extractDates)DB.extractDates={};
     cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
-    KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
-    DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
-    DB.contadores={};DB.levantamentoData='';
+    cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
+    cats.forEach(function(k){delete DB.sentEst[k];delete DB.sentContadores[k];delete DB.contadores[k];});
+    var sentEstKeys=Object.keys(DB.sentEst||{});
+    if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
     save();refreshHome();renderPedido();
   }
   showShareAction(files,printHtmlStr,title);
