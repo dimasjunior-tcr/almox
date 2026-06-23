@@ -1522,12 +1522,15 @@ function limparCategoria(){
 
 function limparLista(){
   showConfirm(
-    'Limpar Levantamento?',
-    'Isso irá zerar todas as quantidades de estoque contadas e limpar o levantamento.',
+    'Limpar '+CATS[CUR].emoji+' '+CUR+'?',
+    'Isso irá zerar as quantidades contadas e remover esta categoria do levantamento.',
     function(){
-      KEYS.forEach(function(k){CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
-      DB.contadores={};DB.levantamentoData='';
-      DB.sentEst={};DB.sentContadores={};DB.sentLevData='';
+      CATS[CUR].itens.forEach(function(i){if(DB.est[CUR]&&DB.est[CUR][i.n]){DB.est[CUR][i.n].est='';DB.est[CUR][i.n].buy='';}});
+      if(DB.contadores)delete DB.contadores[CUR];
+      if(DB.sentEst)delete DB.sentEst[CUR];
+      if(DB.sentContadores)delete DB.sentContadores[CUR];
+      var sentEstKeys=Object.keys(DB.sentEst||{});
+      if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
       save();renderPedido();
     },
     null
