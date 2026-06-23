@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="theme-color" content="#1a0e02"/>
@@ -58,7 +58,7 @@ button{cursor:pointer;font-family:inherit}
 .inum{background:#1a0e02;border:1px solid #5c3010;border-radius:8px;padding:7px 8px;color:#f5e6d3;font-size:14px;font-weight:600;width:100%;outline:none;text-align:center}
 .icomp{display:flex;align-items:center;justify-content:center;background:#1a0e02;border:1px solid #5c3010;border-radius:8px;padding:7px 8px;font-size:14px;font-weight:700;color:#555}
 .icomp.low{background:#3f0f0f;color:#ef4444;border-color:#7f1d1d}
-.navarr{display:flex;gap:10px;padding:12px 14px;position:sticky;bottom:0;background:#1a0e02;border-top:1px solid #2a1505}
+.navarr{display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));position:sticky;bottom:0;background:#1a0e02;border-top:1px solid #2a1505}
 .narr{flex:1;background:#3d1f08;border:none;color:#f5e6d3;border-radius:12px;padding:11px;font-size:13px;font-weight:600}
 .narr:disabled{opacity:.3}
 .abtns{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
@@ -683,15 +683,15 @@ function renderItems(){
       +(item.obs?'<div style="font-size:10px;color:#aaa;font-style:italic;padding:0 0 3px 1px;line-height:1.2;">'+item.obs+'</div>':'')
       +'<div class="irow">'
       +'<div class="ig"><label class="ilbl">MINIMO</label>'
-      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
+      +'<input class="inum" type="text" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
       +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">ESTOQUE</label>'
-      +'<input class="inum" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" value="'+(d.est||'')+'"'
+      +'<input class="inum" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0" value="'+(d.est||'')+'"'
       +' style="border-color:'+(ok?c.cor:'#5c3010')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="est"></div>'
       +'<div class="ig"><label class="ilbl">COMPRAR</label>'
       +(CUR==='CARNES'
-        ?'<input class="inum" type="number" inputmode="decimal" placeholder="'+compTxt+'" value="'+(d.buy!==undefined&&d.buy!==''?d.buy:compTxt==='--'?'':compTxt)+'" style="border-color:#ef4444" data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="buy">'
+        ?'<input class="inum" type="text" inputmode="decimal" placeholder="'+compTxt+'" value="'+(d.buy!==undefined&&d.buy!==''?d.buy:compTxt==='--'?'':compTxt)+'" style="border-color:#ef4444" data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="buy">'
         :'<div class="icomp'+(low?' low':'')+'">'+compTxt+'</div>')
       +'</div>'
       +'</div></div>';
@@ -992,11 +992,11 @@ function renderCfg(){
       +'<div class="itop"><span class="iname">'+item.n+'</span><span class="iund">'+item.u+'</span></div>'
       +'<div class="irow" style="grid-template-columns:1fr 1fr;">'
       +'<div class="ig"><label class="ilbl" style="color:'+c.cor+'">MÍNIMO</label>'
-      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
+      +'<input class="inum" type="text" inputmode="decimal" placeholder="--" value="'+(d.min||'')+'"'
       +' style="border-color:'+(d.min?c.cor:'#5c3010')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="min"></div>'
       +'<div class="ig"><label class="ilbl" style="color:#f59e0b">MÁXIMO</label>'
-      +'<input class="inum" type="number" inputmode="decimal" placeholder="--" value="'+(d.max||'')+'"'
+      +'<input class="inum" type="text" inputmode="decimal" placeholder="--" value="'+(d.max||'')+'"'
       +' style="border-color:'+(d.max?'#f59e0b':'#5c3010')+'"'
       +' data-cat="'+encCat+'" data-nome="'+encNome+'" data-campo="max"></div>'
       +'</div></div>';
