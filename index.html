@@ -1217,6 +1217,15 @@ function _mergeSentEst(localSent, remoteSent){
   });
   return merged;
 }
+function _mergeByCat(local,remote){
+  // Per-category merge: keeps local entries the remote snapshot doesn't have yet
+  // (e.g. two devices counting different categories at the same time)
+  var merged=Object.assign({},remote||{});
+  Object.keys(local||{}).forEach(function(cat){
+    if(merged[cat]===undefined)merged[cat]=local[cat];
+  });
+  return merged;
+}
 function syncApply(data){
   if(!data||typeof data!=='object') return;
   // Merge hist
@@ -1244,13 +1253,16 @@ function syncApply(data){
   DB.est=_mergeEstField(localEst, DB.est);
   // Merge sentEst: preserve local sent data not yet on remote
   DB.sentEst=_mergeSentEst(localSentEst, DB.sentEst);
+  // Merge contadores per category: two devices counting different categories at once must not clobber each other
+  DB.contadores=_mergeByCat(localContadores, DB.contadores);
+  DB.sentContadores=_mergeByCat(localSentContadores, DB.sentContadores);
   DB.hist = mergedHist;
   DB.sentDates = mergedSentDates;
   DB.extractDates = mergedExtractDates;
   // Guarantee these always exist as objects after a remote snapshot may lack them
   if(!DB.est)DB.est={};
-  if(!DB.contadores)DB.contadores=localContadores;
-  if(!DB.sentContadores)DB.sentContadores=localSentContadores;
+  if(!DB.contadores)DB.contadores={};
+  if(!DB.sentContadores)DB.sentContadores={};
   if(!DB.sentLevData)DB.sentLevData='';
   if(!DB.levantamentoData)DB.levantamentoData='';
   try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
