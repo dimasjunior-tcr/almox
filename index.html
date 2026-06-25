@@ -141,6 +141,11 @@ button{cursor:pointer;font-family:inherit}
       <span style="font-size:20px">&#128257;</span><span>Sincronização</span><span id="drawer-sync-dot" style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;"></span>
     </button>
   </div>
+  <div style="padding:14px 18px;border-top:1px solid #3d1f08;">
+    <button onclick="salvarProgresso()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,#a0704a,#7c3a1e);border:none;color:#fff;padding:13px;border-radius:12px;font-size:14px;font-weight:700;">
+      <span style="font-size:18px">&#128190;</span><span>Salvar Progresso</span>
+    </button>
+  </div>
 </div>
 
 <!-- HOME -->
@@ -381,6 +386,11 @@ var _highlightMissing = false;
 
 function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
 function save(){try{localStorage.setItem('estoq4',JSON.stringify(DB));}catch(e){alert('Erro ao salvar: '+e.message);}}
+function salvarProgresso(){
+  save();
+  if(typeof syncPush==='function')syncPush();
+  showToast('Progresso salvo!','#22c55e');
+}
 var DB=load();
 if(!DB.est)DB.est={};
 if(!DB.hist)DB.hist=[];
@@ -1195,7 +1205,7 @@ function syncPush(){
 }
 
 function _mergeEstField(localEst, remoteEst){
-  // Keeps local non-empty est/buy values when remote is empty — prevents sync from wiping active counts
+  // Keeps local non-empty est/buy/min/max values when remote is empty — prevents sync from wiping active counts or configured limits
   var merged=JSON.parse(JSON.stringify(remoteEst||{}));
   Object.keys(localEst||{}).forEach(function(cat){
     if(!merged[cat])merged[cat]={};
@@ -1205,6 +1215,8 @@ function _mergeEstField(localEst, remoteEst){
       var rem=merged[cat][nome];
       if(loc.est!==''&&loc.est!=null&&(rem.est===''||rem.est==null))rem.est=loc.est;
       if(loc.buy!==''&&loc.buy!=null&&(rem.buy===''||rem.buy==null))rem.buy=loc.buy;
+      if(loc.min!==''&&loc.min!=null&&(rem.min===''||rem.min==null))rem.min=loc.min;
+      if(loc.max!==''&&loc.max!=null&&(rem.max===''||rem.max==null))rem.max=loc.max;
     });
   });
   return merged;
