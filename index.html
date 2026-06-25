@@ -1238,8 +1238,34 @@ function _mergeByCat(local,remote){
   });
   return merged;
 }
+function _commitActiveInput(){
+  // Commits whatever the user is actively typing (not yet blurred/Enter) before a sync
+  // event re-renders the screen — otherwise the in-progress keystrokes would be lost.
+  // Returns info needed to restore focus/cursor after the re-render, or null.
+  var el=document.activeElement;
+  if(el&&el.tagName==='INPUT'&&el.dataset&&el.dataset.cat&&el.dataset.nome&&el.dataset.campo){
+    var cat=decodeURIComponent(el.dataset.cat);
+    var nome=decodeURIComponent(el.dataset.nome);
+    var campo=el.dataset.campo;
+    if(!DB.est[cat])DB.est[cat]={};
+    if(!DB.est[cat][nome])DB.est[cat][nome]={min:'',est:'',max:''};
+    DB.est[cat][nome][campo]=el.value;
+    return {cat:el.dataset.cat,nome:el.dataset.nome,campo:campo,selStart:el.selectionStart,selEnd:el.selectionEnd};
+  }
+  return null;
+}
+function _restoreActiveInput(info){
+  if(!info)return;
+  var sel='input[data-cat="'+info.cat+'"][data-nome="'+info.nome+'"][data-campo="'+info.campo+'"]';
+  var el=document.querySelector(sel);
+  if(el){
+    el.focus();
+    try{el.setSelectionRange(info.selStart,info.selEnd);}catch(e){}
+  }
+}
 function syncApply(data){
   if(!data||typeof data!=='object') return;
+  var activeInfo=_commitActiveInput();
   // Merge hist
   var localHist=DB.hist||[];
   var remoteHist=(data.hist)||[];
@@ -1284,6 +1310,7 @@ function syncApply(data){
   else if(!document.getElementById('s-pedido').classList.contains('hidden')) renderPedido();
   else if(!document.getElementById('s-historico').classList.contains('hidden')) renderHist();
   else if(!document.getElementById('s-config').classList.contains('hidden')) renderCfg();
+  _restoreActiveInput(activeInfo);
 }
 
 function syncListen(){
