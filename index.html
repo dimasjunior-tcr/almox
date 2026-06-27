@@ -384,7 +384,7 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-27T22:50:00Z';
+var APP_VERSION = '2026-06-27T23:30:00Z';
 function checkForUpdate(){
   fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.text();})
@@ -586,17 +586,22 @@ function enviarLevantamento(){
   });
   if(!hasChanges){showToast('Levantamento já atualizado. Sem modificações.','#d97706');return;}
   if(!DB.sentEst)DB.sentEst={};
-  catsToSend.forEach(function(k){
-    DB.sentEst[k]={};
-    CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
-    if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
-    if(!DB.sentDates)DB.sentDates={};DB.sentDates[k]=Date.now();
-    CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});
-    if(DB.contadores)delete DB.contadores[k];
-  });
-  if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
-  save();
-  renderCntUI();
+  // try/finally: any future bug in this loop can never skip save() — whatever was
+  // already moved into DB.sentEst must always reach localStorage.
+  try{
+    catsToSend.forEach(function(k){
+      DB.sentEst[k]={};
+      CATS[k].itens.forEach(function(i){DB.sentEst[k][i.n]=gi(k,i.n).est;});
+      if(_contadorNome){if(!DB.sentContadores)DB.sentContadores={};DB.sentContadores[k]=_contadorNome;}
+      if(!DB.sentDates)DB.sentDates={};DB.sentDates[k]=Date.now();
+      CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n])DB.est[k][i.n].est='';});
+      if(DB.contadores)delete DB.contadores[k];
+    });
+    if(!DB.sentLevData)DB.sentLevData=DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
+  }finally{
+    save();
+    renderCntUI();
+  }
   showToast('Levantamento enviado com sucesso!');
 }
 
@@ -1144,30 +1149,35 @@ function doPDF(){
   var printHtmlStr=buildMultiCatHtml(cats,pdfData,now);
   if(_pdfIsPedido){
     _pdfIsPedido=false;
-    // Save hist only from the categories actually exported (cats), not every category shown in the modal
-    var exportedByCat={};
-    cats.forEach(function(k){if(pdfData.byCat[k])exportedByCat[k]=pdfData.byCat[k];});
-    var exportedContadores={};
-    cats.forEach(function(k){if(pdfData.contadores&&pdfData.contadores[k])exportedContadores[k]=pdfData.contadores[k];});
-    var allItems=[];
-    Object.keys(exportedByCat).forEach(function(k){allItems=allItems.concat(exportedByCat[k]);});
-    if(allItems.length>0){
-      var need=allItems.filter(function(i){return i.buy>0;});
-      DB.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
-        data:new Date().toISOString(),dataStr:pdfData.dataStr,
-        total:need.length,byCat:exportedByCat,contadores:exportedContadores});
+    // Wrapped in try/finally so a future bug in any step here can never skip save() —
+    // whatever was already added to DB.hist/DB.est must always reach localStorage.
+    try{
+      // Save hist only from the categories actually exported (cats), not every category shown in the modal
+      var exportedByCat={};
+      cats.forEach(function(k){if(pdfData.byCat[k])exportedByCat[k]=pdfData.byCat[k];});
+      var exportedContadores={};
+      cats.forEach(function(k){if(pdfData.contadores&&pdfData.contadores[k])exportedContadores[k]=pdfData.contadores[k];});
+      var allItems=[];
+      Object.keys(exportedByCat).forEach(function(k){allItems=allItems.concat(exportedByCat[k]);});
+      if(allItems.length>0){
+        var need=allItems.filter(function(i){return i.buy>0;});
+        DB.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
+          data:new Date().toISOString(),dataStr:pdfData.dataStr,
+          total:need.length,byCat:exportedByCat,contadores:exportedContadores});
+      }
+      var exportTs=Date.now();
+      if(!DB.extractDates)DB.extractDates={};
+      cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
+      cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
+      if(!DB.sentEst)DB.sentEst={};
+      if(!DB.sentContadores)DB.sentContadores={};
+      if(!DB.contadores)DB.contadores={};
+      cats.forEach(function(k){delete DB.sentEst[k];delete DB.sentContadores[k];delete DB.contadores[k];});
+      var sentEstKeys=Object.keys(DB.sentEst||{});
+      if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
+    }finally{
+      save();refreshHome();renderPedido();
     }
-    var exportTs=Date.now();
-    if(!DB.extractDates)DB.extractDates={};
-    cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
-    cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
-    if(!DB.sentEst)DB.sentEst={};
-    if(!DB.sentContadores)DB.sentContadores={};
-    if(!DB.contadores)DB.contadores={};
-    cats.forEach(function(k){delete DB.sentEst[k];delete DB.sentContadores[k];delete DB.contadores[k];});
-    var sentEstKeys=Object.keys(DB.sentEst||{});
-    if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
-    save();refreshHome();renderPedido();
   }
   showShareAction(files,printHtmlStr,title);
 }
@@ -1659,6 +1669,19 @@ document.addEventListener('visibilitychange', function(){
 window.addEventListener('pageshow', function(e){
   if(e.persisted) syncRefresh();
 });
+
+// Safety net: never lose a count or a generated levantamento if the user backgrounds
+// the app, switches tabs, or closes it mid-edit. visibilitychange→hidden is the most
+// reliable signal on mobile (beforeunload is unreliable on iOS Safari/Android Chrome).
+function _saveEverythingNow(){
+  _commitActiveInput();
+  save();
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden') _saveEverythingNow();
+});
+window.addEventListener('pagehide', _saveEverythingNow);
+window.addEventListener('beforeunload', _saveEverythingNow);
 
 go('home');
 
