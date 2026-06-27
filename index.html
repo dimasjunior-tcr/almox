@@ -384,6 +384,23 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
+var APP_VERSION = '2026-06-27T22:50:00Z';
+function checkForUpdate(){
+  fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})
+    .then(function(r){return r.text();})
+    .then(function(html){
+      var m=html.match(/var APP_VERSION = '([^']+)'/);
+      if(m&&m[1]&&m[1]!==APP_VERSION){
+        showToast('Nova versão disponível, atualizando...','#2563eb');
+        setTimeout(function(){location.reload();},1500);
+      }
+    })
+    .catch(function(){});
+}
+setTimeout(checkForUpdate,4000);
+setInterval(checkForUpdate,5*60*1000);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkForUpdate(); });
+
 function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
 function save(){try{localStorage.setItem('estoq4',JSON.stringify(DB));}catch(e){alert('Erro ao salvar: '+e.message);}}
 function salvarProgresso(){
