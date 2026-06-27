@@ -1444,7 +1444,8 @@ function askSaveBeforePdf(){
   if(allItems.length===0){alert('Nenhum levantamento enviado para exportar.');return;}
   var byCat={};
   allItems.forEach(function(i){if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
-  var levData=DB.sentLevData||DB.levantamentoData||new Date().toLocaleDateString('pt-BR');
+  // O levantamento exportado sempre representa o dia em que está sendo gerado, não o dia em que a contagem começou
+  var levData=new Date().toLocaleDateString('pt-BR');
   var contadores=Object.assign({},DB.sentContadores||{},DB.contadores||{});
   pdfData={nome:'Levantamento',dataStr:levData,byCat:byCat,contadores:contadores};
   _pdfIsPedido=true;
