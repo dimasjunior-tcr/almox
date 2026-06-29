@@ -384,7 +384,7 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-27T23:55:00Z';
+var APP_VERSION = '2026-06-28T00:05:00Z';
 function checkForUpdate(){
   fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.text();})
@@ -397,8 +397,8 @@ function checkForUpdate(){
     })
     .catch(function(){});
 }
-setTimeout(checkForUpdate,4000);
-setInterval(checkForUpdate,5*60*1000);
+setTimeout(checkForUpdate,1500);
+setInterval(checkForUpdate,60*1000);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkForUpdate(); });
 
 function load(){try{return JSON.parse(localStorage.getItem('estoq4'))||{est:{},hist:[]};}catch(e){return{est:{},hist:[]};}}
