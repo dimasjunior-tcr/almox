@@ -384,7 +384,7 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-27T23:30:00Z';
+var APP_VERSION = '2026-06-27T23:55:00Z';
 function checkForUpdate(){
   fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.text();})
@@ -1149,37 +1149,86 @@ function doPDF(){
   var printHtmlStr=buildMultiCatHtml(cats,pdfData,now);
   if(_pdfIsPedido){
     _pdfIsPedido=false;
-    // Wrapped in try/finally so a future bug in any step here can never skip save() —
-    // whatever was already added to DB.hist/DB.est must always reach localStorage.
-    try{
-      // Save hist only from the categories actually exported (cats), not every category shown in the modal
-      var exportedByCat={};
-      cats.forEach(function(k){if(pdfData.byCat[k])exportedByCat[k]=pdfData.byCat[k];});
-      var exportedContadores={};
-      cats.forEach(function(k){if(pdfData.contadores&&pdfData.contadores[k])exportedContadores[k]=pdfData.contadores[k];});
-      var allItems=[];
-      Object.keys(exportedByCat).forEach(function(k){allItems=allItems.concat(exportedByCat[k]);});
-      if(allItems.length>0){
-        var need=allItems.filter(function(i){return i.buy>0;});
-        DB.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
-          data:new Date().toISOString(),dataStr:pdfData.dataStr,
-          total:need.length,byCat:exportedByCat,contadores:exportedContadores});
+    // O levantamento só sai de "Levantamentos" (e só entra no histórico) depois que o
+    // servidor confirmar o recebimento. Sem internet boa, tudo fica como estava e o
+    // usuário pode tentar de novo depois — nada é perdido nem desaparece da tela.
+    showToast('Enviando levantamento...','#2563eb');
+    _finalizeExportWhenServerConfirms(cats).then(function(ok){
+      if(!ok){
+        alert('Conecte a internet para enviar o levantamento.\n\nOs dados continuam salvos em Levantamentos — tente exportar novamente quando a conexão melhorar.');
       }
-      var exportTs=Date.now();
-      if(!DB.extractDates)DB.extractDates={};
-      cats.forEach(function(cat){DB.extractDates[cat]=exportTs;});
-      cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(DB.est[k]&&DB.est[k][i.n]){DB.est[k][i.n].est='';DB.est[k][i.n].buy='';}});});
-      if(!DB.sentEst)DB.sentEst={};
-      if(!DB.sentContadores)DB.sentContadores={};
-      if(!DB.contadores)DB.contadores={};
-      cats.forEach(function(k){delete DB.sentEst[k];delete DB.sentContadores[k];delete DB.contadores[k];});
-      var sentEstKeys=Object.keys(DB.sentEst||{});
-      if(sentEstKeys.length===0){DB.sentLevData='';DB.levantamentoData='';}
-    }finally{
-      save();refreshHome();renderPedido();
-    }
+      showShareAction(files,printHtmlStr,title);
+    });
+    return;
   }
   showShareAction(files,printHtmlStr,title);
+}
+function _finalizeExportWhenServerConfirms(cats){
+  // Builds the post-export state on a CANDIDATE copy of DB — the real DB (and therefore
+  // the Levantamentos screen) is only switched over to it once the server PUT succeeds.
+  return new Promise(function(resolve){
+    var candidate=JSON.parse(JSON.stringify(DB));
+    var exportedByCat={};
+    cats.forEach(function(k){if(pdfData.byCat[k])exportedByCat[k]=pdfData.byCat[k];});
+    var exportedContadores={};
+    cats.forEach(function(k){if(pdfData.contadores&&pdfData.contadores[k])exportedContadores[k]=pdfData.contadores[k];});
+    var allItems=[];
+    Object.keys(exportedByCat).forEach(function(k){allItems=allItems.concat(exportedByCat[k]);});
+    if(allItems.length>0){
+      var need=allItems.filter(function(i){return i.buy>0;});
+      candidate.hist=candidate.hist||[];
+      candidate.hist.unshift({id:Date.now(),nome:'Levantamento '+pdfData.dataStr,
+        data:new Date().toISOString(),dataStr:pdfData.dataStr,
+        total:need.length,byCat:exportedByCat,contadores:exportedContadores});
+    }
+    var exportTs=Date.now();
+    if(!candidate.extractDates)candidate.extractDates={};
+    cats.forEach(function(cat){candidate.extractDates[cat]=exportTs;});
+    cats.forEach(function(k){if(CATS[k])CATS[k].itens.forEach(function(i){if(candidate.est[k]&&candidate.est[k][i.n]){candidate.est[k][i.n].est='';candidate.est[k][i.n].buy='';}});});
+    if(!candidate.sentEst)candidate.sentEst={};
+    if(!candidate.sentContadores)candidate.sentContadores={};
+    if(!candidate.contadores)candidate.contadores={};
+    cats.forEach(function(k){delete candidate.sentEst[k];delete candidate.sentContadores[k];delete candidate.contadores[k];});
+    var sentEstKeys=Object.keys(candidate.sentEst||{});
+    if(sentEstKeys.length===0){candidate.sentLevData='';candidate.levantamentoData='';}
+
+    if(!SYNC_URL){ resolve(false); return; }
+
+    function commitAndResolve(success){
+      if(success){
+        DB=candidate;
+        try{ localStorage.setItem('estoq4',JSON.stringify(DB)); }catch(e){}
+        refreshHome();renderPedido();
+      }
+      resolve(success);
+    }
+
+    var timedOut=false;
+    var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var timeoutId=setTimeout(function(){
+      timedOut=true;
+      if(ctrl)ctrl.abort();
+      commitAndResolve(false);
+    },10000);
+
+    fbSignInAnon(function(){
+      if(timedOut)return;
+      _syncPushing=true;
+      fetch(syncEndpoint(),{method:'PUT',body:JSON.stringify(candidate),headers:{'Content-Type':'application/json'},signal:ctrl?ctrl.signal:undefined})
+        .then(function(r){
+          clearTimeout(timeoutId);
+          if(timedOut)return;
+          setTimeout(function(){_syncPushing=false;},1500);
+          commitAndResolve(!!(r&&r.ok));
+        })
+        .catch(function(){
+          clearTimeout(timeoutId);
+          _syncPushing=false;
+          if(timedOut)return;
+          commitAndResolve(false);
+        });
+    });
+  });
 }
 
 // ===== SYNC =====
