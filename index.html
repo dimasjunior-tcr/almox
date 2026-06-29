@@ -172,6 +172,7 @@ button{cursor:pointer;font-family:inherit}
     <span class="top-ttl" id="cnt-ttl">-</span>
     <button onclick="limparCategoria()" style="background:#7f1d1d44;border:1px solid #7f1d1d88;color:#ef4444;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128465; Limpar</button>
     <span class="top-bdg" id="cnt-bdg">0/0</span>
+    <button onclick="salvarProgresso()" style="background:#15803d;border:none;color:#fff;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128190; Salvar</button>
     <button onclick="enviarLevantamento()" style="background:#2563eb;border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128228; Enviar</button>
   </div>
   <div class="tabs" id="cnt-tabs"></div>
@@ -384,7 +385,7 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-28T00:20:00Z';
+var APP_VERSION = '2026-06-28T00:30:00Z';
 var _updatePending=false;
 function _isActivelyTypingCount(){
   var el=document.activeElement;
