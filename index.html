@@ -227,6 +227,7 @@ button{cursor:pointer;font-family:inherit}
   <div class="topbar" id="cfg-topbar">
     <button class="back" onclick="go('home')">&#8592; Voltar</button>
     <span class="top-ttl" id="cfg-ttl">Minimos</span>
+    <button onclick="salvarProgresso()" style="background:#15803d;border:none;color:#fff;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;">&#128190; Salvar</button>
   </div>
   <div class="tabs" id="cfg-tabs"></div>
   <div class="srch-wrap"><input class="srch" id="cfg-srch" placeholder="Buscar item..." oninput="renderCfg()"></div>
@@ -385,7 +386,7 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-28T00:30:00Z';
+var APP_VERSION = '2026-06-28T00:40:00Z';
 var _updatePending=false;
 function _isActivelyTypingCount(){
   var el=document.activeElement;
