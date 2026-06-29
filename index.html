@@ -384,19 +384,44 @@ var _clearListaAfterPdf = false;
 var _pdfIsPedido = false;
 var _highlightMissing = false;
 
-var APP_VERSION = '2026-06-28T00:05:00Z';
+var APP_VERSION = '2026-06-28T00:20:00Z';
+var _updatePending=false;
+function _isActivelyTypingCount(){
+  var el=document.activeElement;
+  return !!(el&&el.tagName==='INPUT'&&el.dataset&&el.dataset.cat&&el.dataset.nome&&el.dataset.campo);
+}
 function checkForUpdate(){
   fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.text();})
     .then(function(html){
       var m=html.match(/var APP_VERSION = '([^']+)'/);
       if(m&&m[1]&&m[1]!==APP_VERSION){
-        showToast('Nova versão disponível, atualizando...','#2563eb');
-        setTimeout(function(){location.reload();},1500);
+        _updatePending=true;
+        _applyPendingUpdateIfSafe();
       }
     })
     .catch(function(){});
 }
+function _applyPendingUpdateIfSafe(){
+  // Never yank the screen away (and the in-progress keystroke) while the user is
+  // actively typing a count. The reload is retried on the next checkForUpdate cycle
+  // (every minute) or right when the field loses focus — whichever comes first.
+  if(!_updatePending)return;
+  if(_isActivelyTypingCount()){
+    _commitActiveInput();
+    save();
+    return;
+  }
+  _commitActiveInput();
+  save();
+  showToast('Nova versão disponível, atualizando...','#2563eb');
+  setTimeout(function(){location.reload();},1500);
+}
+document.addEventListener('blur',function(e){
+  if(_updatePending&&e.target&&e.target.dataset&&e.target.dataset.campo){
+    setTimeout(_applyPendingUpdateIfSafe,200);
+  }
+},true);
 setTimeout(checkForUpdate,1500);
 setInterval(checkForUpdate,60*1000);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkForUpdate(); });
